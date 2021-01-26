@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ged-app-unirio-db
+    username: postgres
+    password: 1234
+  jpa:
+    database: postgresql
+    hibernate:
+      ddl-auto: none
+      use-new-id-generator-mappings: false
+    show-sql: true
+  elasticsearch:
+    rest:
+      uris: http://localhost:9200
+  jackson:
+    serialization.indent_output: true
