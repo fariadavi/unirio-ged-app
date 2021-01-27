@@ -16,10 +16,16 @@ class DepartmentController(
 ) {
 
     @GetMapping("/{id}")
-    fun getDepartment(@PathVariable id: Long): Department = deptRepo.findById(id).get()
+    fun getDepartment(@PathVariable id : Long): ResponseEntity<Department> {
+        val dept = deptSvc.getById(id)
+        return ResponseEntity.ok(dept)
+    }
 
     @GetMapping
-    fun getAllDepartments(): Iterable<Department> = deptRepo.findAll()
+    fun getAllDepartments(): ResponseEntity<Iterable<Department>> {
+        val allDepts = deptRepo.findAll()
+        return ResponseEntity.ok(allDepts)
+    }
 
     @PostMapping
     fun addDepartment(@RequestBody dept: Department): ResponseEntity<Department> {
@@ -27,6 +33,15 @@ class DepartmentController(
         return ResponseEntity.status(HttpStatus.CREATED).body(newDept)
     }
 
+    @PatchMapping("/{id}")
+    fun updateDepartment(@PathVariable id : Long, @RequestBody dept: Department): ResponseEntity<Department> {
+        val modifiedDept = deptSvc.update(id, dept)
+        return ResponseEntity.ok(modifiedDept)
+    }
+
     @DeleteMapping("/{id}")
-    fun deleteDepartment(@PathVariable id: Long) = deptRepo.deleteById(id)
+    fun deleteDepartment(@PathVariable id : Long): ResponseEntity<String> {
+        deptSvc.deleteById(id)
+        return ResponseEntity.ok("Department '$id' have been successfully deleted")
+    }
 }
