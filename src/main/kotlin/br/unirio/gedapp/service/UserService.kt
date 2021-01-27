@@ -3,10 +3,13 @@ package br.unirio.gedapp.service
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.User
 import br.unirio.gedapp.repository.UserRepository
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
 
 @Service
-class UserService(val userRepo: UserRepository) {
+class UserService(val userRepo: UserRepository) : UserDetailsService {
 
     fun getById(id: Long): User =
         userRepo
@@ -33,4 +36,13 @@ class UserService(val userRepo: UserRepository) {
 
         return userRepo.save(updatedUser)
     }
+
+    override fun loadUserByUsername(email: String): UserDetails {
+        try {
+            return userRepo.findByEmail(email).first()
+        } catch (e: NoSuchElementException) {
+            throw UsernameNotFoundException("User with the specified email was not found")
+        }
+    }
 }
+

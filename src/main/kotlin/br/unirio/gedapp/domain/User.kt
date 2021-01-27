@@ -36,4 +36,27 @@ data class User(
     )
     val departments: Collection<Department>? = null
 
-)
+) : UserDetails {
+
+    //TODO Granted Authorities will be based on User Permissions
+    @JsonIgnore
+    override fun getAuthorities(): Collection<GrantedAuthority> = emptyList()
+
+    @JsonIgnore
+    override fun getPassword(): String = ""
+
+    @JsonIgnore
+    override fun getUsername(): String = email
+
+    @JsonIgnore
+    override fun isAccountNonExpired(): Boolean = true
+
+    @JsonIgnore
+    override fun isAccountNonLocked(): Boolean = true
+
+    @JsonIgnore
+    override fun isCredentialsNonExpired(): Boolean = true
+
+    @JsonIgnore
+    override fun isEnabled(): Boolean = permissions?.isNotEmpty() ?: false
+}
