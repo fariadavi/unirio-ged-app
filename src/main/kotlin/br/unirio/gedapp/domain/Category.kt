@@ -1,10 +1,15 @@
 package br.unirio.gedapp.domain
 
+import javax.persistence.*
+
+@Entity
 data class Category(
 
-    val id: Long,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = -1,
 
-    val name: String,
+    val name: String = "",
 
-    val parent: Category?
+    @ManyToOne(fetch = FetchType.EAGER)
+    val parent: Category? = null
 )

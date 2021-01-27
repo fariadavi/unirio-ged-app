@@ -1,12 +1,20 @@
 package br.unirio.gedapp.domain
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import javax.persistence.*
+
+@Entity
+@Table(schema = "public")
 data class Department(
 
-    val id: Long,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = -1,
 
-    val name: String,
+    val name: String = "",
 
-    val acronym: String,
+    val acronym: String = "",
 
-    val users: Collection<User>
+    @JsonIgnore
+    @ManyToMany(mappedBy = "departments")
+    val users: Collection<User>? = null
 )
