@@ -31,8 +31,8 @@ class UserService(val userRepo: UserRepository) : UserDetailsService {
         if (newDataUser.permissions != null)
             updatedUser = updatedUser.copy(permissions = newDataUser.permissions)
 
-        if (!newDataUser.departments.isNullOrEmpty())
-            updatedUser = updatedUser.copy(departments = newDataUser.departments)
+        if (newDataUser.department != null)
+            updatedUser = updatedUser.copy(department = newDataUser.department)
 
         return userRepo.save(updatedUser)
     }

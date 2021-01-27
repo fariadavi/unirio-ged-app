@@ -12,9 +12,5 @@ data class Department(
 
     val name: String = "",
 
-    val acronym: String = "",
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "departments")
-    val users: Collection<User>? = null
+    val acronym: String = ""
 )

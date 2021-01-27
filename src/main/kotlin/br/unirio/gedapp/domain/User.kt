@@ -28,13 +28,8 @@ data class User(
     @Type(type = "enum-set", parameters = [Parameter(name = "enumClass", value = "br.unirio.gedapp.domain.Permission")])
     val permissions: EnumSet<Permission>? = null,
 
-    @ManyToMany
-    @JoinTable(
-        name = "platform_user_department",
-        joinColumns = [JoinColumn(name = "platform_user_id")],
-        inverseJoinColumns = [JoinColumn(name = "department_id")]
-    )
-    val departments: Collection<Department>? = null
+    @ManyToOne(fetch = FetchType.EAGER)
+    val department: Department? = null
 
 ) : UserDetails {
 
