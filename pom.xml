@@ -12,7 +12,7 @@
 	<artifactId>ged-app</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ged-app</name>
-	<description>Demo project for Spring Boot</description>
+	<description>UNIRIO GED App Project</description>
 	<properties>
 		<java.version>11</java.version>
 		<kotlin.version>1.4.21</kotlin.version>
@@ -47,6 +47,11 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+			<version>7.4.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
