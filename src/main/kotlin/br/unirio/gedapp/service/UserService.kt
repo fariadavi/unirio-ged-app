@@ -16,6 +16,14 @@ class UserService(val userRepo: UserRepository) : UserDetailsService {
             .findById(id)
             .orElseThrow { ResourceNotFoundException() }
 
+    fun getByEmail(email: String): User  {
+        val user = userRepo.findByEmail(email).orElseThrow { ResourceNotFoundException() }
+        if (user.isEmpty())
+            throw ResourceNotFoundException()
+
+        return user.first()
+    }
+
     fun update(userId: Long, newDataUser: User): User {
         var updatedUser = getById(userId)
 
@@ -39,7 +47,7 @@ class UserService(val userRepo: UserRepository) : UserDetailsService {
 
     override fun loadUserByUsername(email: String): UserDetails {
         try {
-            return userRepo.findByEmail(email).first()
+            return userRepo.findByEmail(email).get().first()
         } catch (e: NoSuchElementException) {
             throw UsernameNotFoundException("User with the specified email was not found")
         }

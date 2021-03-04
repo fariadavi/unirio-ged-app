@@ -6,6 +6,7 @@ import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -44,5 +45,12 @@ class UserController(
         userSvc.getById(id)
         userRepo.deleteById(id)
         return ResponseEntity.ok("User '$id' have been successfully deleted")
+    }
+
+    @GetMapping("/loggedUserInfo")
+    fun getLoggedUserInfo(): ResponseEntity<User> {
+        val userEmail = SecurityContextHolder.getContext().authentication.name
+        val user = userSvc.getByEmail(userEmail)
+        return ResponseEntity.ok(user)
     }
 }

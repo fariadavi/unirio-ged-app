@@ -1,5 +1,6 @@
 package br.unirio.gedapp.configuration
 
+import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
 import com.google.common.collect.ImmutableList
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,13 +12,18 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig(private val userSvc: UserService) : WebSecurityConfigurerAdapter() {
+class SecurityConfig(
+    private val userSvc: UserService,
+    private val jwtConfig: JwtConfig,
+    private val tokenProvider: JwtProvider
+) : WebSecurityConfigurerAdapter() {
 
     @Autowired
     fun configureGlobal(auth: AuthenticationManagerBuilder) {
@@ -25,10 +31,12 @@ class SecurityConfig(private val userSvc: UserService) : WebSecurityConfigurerAd
     }
 
     override fun configure(http: HttpSecurity) {
-        http.authorizeRequests()
-            .antMatchers("/**").permitAll()
-            .and()
+        http
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .addFilterBefore(AuthenticationFilter(jwtConfig, tokenProvider, userSvc), UsernamePasswordAuthenticationFilter::class.java)
+            .authorizeRequests()
+            .antMatchers("/**").permitAll()
             .and()
             .csrf().disable()
             .headers().frameOptions().disable()
