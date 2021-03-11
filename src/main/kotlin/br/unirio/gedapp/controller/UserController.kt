@@ -1,11 +1,13 @@
 package br.unirio.gedapp.controller
 
+import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.domain.User
 import br.unirio.gedapp.repository.UserRepository
 import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
@@ -49,7 +51,11 @@ class UserController(
 
     @GetMapping("/loggedUserInfo")
     fun getLoggedUserInfo(): ResponseEntity<User> {
-        val userEmail = SecurityContextHolder.getContext().authentication.name
+        val auth = SecurityContextHolder.getContext().authentication
+        if (auth is AnonymousAuthenticationToken)
+            throw UnauthorizedException()
+
+        val userEmail = auth.name
         val user = userSvc.getByEmail(userEmail)
         return ResponseEntity.ok(user)
     }
