@@ -25,11 +25,20 @@ data class User(
 
     val email: String = "",
 
-    @Type(type = "enum-set", parameters = [Parameter(name = "enumClass", value = "br.unirio.gedapp.domain.Permission")])
-    val permissions: EnumSet<Permission>? = null,
-
     @ManyToOne(fetch = FetchType.EAGER)
-    val department: Department? = null
+    @JoinColumn(name = "department_id")
+    val currentDepartment: Department? = null,
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "platform_user_department", schema = "public",
+        joinColumns = [JoinColumn(name = "platform_user_id", referencedColumnName = "id")],
+        inverseJoinColumns = [JoinColumn(name = "department_id", referencedColumnName = "id")]
+    )
+    val departments: Set<Department>? = mutableSetOf(),
+
+    @Type(type = "enum-set", parameters = [Parameter(name = "enumClass", value = "br.unirio.gedapp.domain.Permission")])
+    val permissions: EnumSet<Permission>? = EnumSet.noneOf(Permission::class.java)
 
 ) : UserDetails {
 

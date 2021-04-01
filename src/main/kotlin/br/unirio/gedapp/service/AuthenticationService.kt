@@ -29,7 +29,7 @@ class AuthenticationService(
 
         val email: String = idToken.payload.email
 
-        val userDetails: UserDetails = try { userSvc.loadUserByUsername(email) } catch (e: NoSuchElementException) { throw ResourceNotFoundException() }
+        val userDetails: UserDetails = userSvc.loadUserByUsername(email)
         val authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
 
         return jwtProvider.generateToken(authenticationTokenObj)

@@ -29,7 +29,7 @@ class AuthenticationFilter(
                 val claims: Claims = jwtProvider.getClaimsFromJWT(token)
                 val email = claims.subject
 
-                val userDetails: UserDetails = try { userSvc.loadUserByUsername(email) } catch (e: NoSuchElementException) { throw ResourceNotFoundException() }
+                val userDetails: UserDetails = userSvc.loadUserByUsername(email)
                 val authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
                 authenticationTokenObj.details = WebAuthenticationDetailsSource().buildDetails(req)
 
