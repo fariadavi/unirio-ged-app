@@ -22,24 +22,23 @@ class DepartmentService(
 
     @Transactional
     fun createNewDepartment(dept: Department): Department {
-        val saved: Department = deptRepo.save(dept)
-        tenantSvc.initDatabase(saved.acronym.toLowerCase())
-        return saved
+        val savedDept: Department = deptRepo.save(dept)
+        tenantSvc.initDatabase(savedDept.acronym.toLowerCase())
+        return savedDept
     }
 
     @Transactional
     fun update(deptId: Long, newDataDept: Department): Department {
-        var updatedDept = getById(deptId)
-        val currentAcronym = updatedDept.acronym
+        var existingDept = getById(deptId)
+        val currentAcronym = existingDept.acronym
 
         if (newDataDept.name.isNotBlank())
-            updatedDept = updatedDept.copy(name = newDataDept.name)
+            existingDept = existingDept.copy(name = newDataDept.name)
 
         if (newDataDept.acronym.isNotBlank())
-            updatedDept = updatedDept.copy(acronym = newDataDept.acronym)
+            existingDept = existingDept.copy(acronym = newDataDept.acronym)
 
-        updatedDept = deptRepo.save(updatedDept)
-
+        val updatedDept = deptRepo.save(existingDept)
 
         if (currentAcronym != updatedDept.acronym) {
             tenantSvc.renameSchema(currentAcronym, updatedDept.acronym)
@@ -61,7 +60,7 @@ class DepartmentService(
 
         try {
             deptRepo.delete(dept)
-        } catch (e : DataIntegrityViolationException) {
+        } catch (e: DataIntegrityViolationException) {
             throw DataIntegrityViolationException("There are users associated with this department. It's not possible to delete an active department.")
         }
 
