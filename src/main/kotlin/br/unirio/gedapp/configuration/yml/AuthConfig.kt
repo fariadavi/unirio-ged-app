@@ -1,4 +1,4 @@
-package br.unirio.gedapp.configuration
+package br.unirio.gedapp.configuration.yml
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding

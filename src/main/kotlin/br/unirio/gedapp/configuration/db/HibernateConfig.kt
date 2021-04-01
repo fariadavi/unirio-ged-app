@@ -1,4 +1,4 @@
-package br.unirio.gedapp.configuration
+package br.unirio.gedapp.configuration.db
 
 import br.unirio.gedapp.Application
 import org.hibernate.MultiTenancyStrategy

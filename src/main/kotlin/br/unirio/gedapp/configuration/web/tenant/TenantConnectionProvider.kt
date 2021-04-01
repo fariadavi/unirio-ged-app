@@ -1,4 +1,4 @@
-package br.unirio.gedapp.configuration
+package br.unirio.gedapp.configuration.web.tenant
 
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider
 import org.springframework.stereotype.Component
@@ -14,15 +14,13 @@ class TenantConnectionProvider(private val datasource: DataSource) : MultiTenant
 
     override fun getConnection(tenantIdentifier: String): Connection {
         val connection: Connection = anyConnection
-        connection.createStatement()
-            .execute("SET SCHEMA '$tenantIdentifier'")
+        connection.createStatement().execute("SET SCHEMA '$tenantIdentifier'")
         return connection
     }
 
     override fun releaseConnection(tenantIdentifier: String, connection: Connection) {
         val defaultTenant = TenantIdentifierResolver.DEFAULT_TENANT
-        connection.createStatement()
-            .execute("SET SCHEMA '$defaultTenant'")
+        connection.createStatement().execute("SET SCHEMA '$defaultTenant'")
         releaseAnyConnection(connection)
     }
 

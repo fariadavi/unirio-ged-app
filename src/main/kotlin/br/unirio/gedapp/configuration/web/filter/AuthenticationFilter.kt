@@ -1,6 +1,6 @@
-package br.unirio.gedapp.configuration
+package br.unirio.gedapp.configuration.web.filter
 
-import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
+import br.unirio.gedapp.configuration.yml.JwtConfig
 import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
 import io.jsonwebtoken.Claims
@@ -9,7 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
 import org.springframework.web.filter.OncePerRequestFilter
-import java.util.NoSuchElementException
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse

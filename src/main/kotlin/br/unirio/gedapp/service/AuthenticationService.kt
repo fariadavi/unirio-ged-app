@@ -1,6 +1,6 @@
 package br.unirio.gedapp.service
 
-import br.unirio.gedapp.configuration.AuthConfig
+import br.unirio.gedapp.configuration.yml.AuthConfig
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 class AuthenticationService(

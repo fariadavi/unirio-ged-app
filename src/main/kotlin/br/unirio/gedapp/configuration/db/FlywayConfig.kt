@@ -1,5 +1,6 @@
-package br.unirio.gedapp.configuration
+package br.unirio.gedapp.configuration.db
 
+import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver
 import br.unirio.gedapp.domain.Department
 import br.unirio.gedapp.repository.DepartmentRepository
 import org.flywaydb.core.Flyway

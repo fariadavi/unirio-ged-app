@@ -1,5 +1,7 @@
-package br.unirio.gedapp.configuration
+package br.unirio.gedapp.configuration.web
 
+import br.unirio.gedapp.configuration.web.filter.AuthenticationFilter
+import br.unirio.gedapp.configuration.yml.JwtConfig
 import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
 import com.google.common.collect.ImmutableList

@@ -1,4 +1,4 @@
-package br.unirio.gedapp.configuration
+package br.unirio.gedapp.configuration.web.tenant
 
 import java.security.Principal
 

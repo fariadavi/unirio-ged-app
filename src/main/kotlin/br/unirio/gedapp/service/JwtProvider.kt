@@ -1,6 +1,6 @@
 package br.unirio.gedapp.service
 
-import br.unirio.gedapp.configuration.JwtConfig
+import br.unirio.gedapp.configuration.yml.JwtConfig
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
