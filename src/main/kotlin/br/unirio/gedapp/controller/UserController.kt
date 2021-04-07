@@ -1,5 +1,6 @@
 package br.unirio.gedapp.controller
 
+import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.domain.User
 import br.unirio.gedapp.repository.UserRepository
@@ -39,12 +40,14 @@ class UserController(
     @PatchMapping("/{id}")
     fun updateUser(@PathVariable id : Long, @RequestBody newDataUser: User): ResponseEntity<User> {
         val modifiedUser = userSvc.update(id, newDataUser)
-        return ResponseEntity.status(HttpStatus.CREATED).body(modifiedUser)
+        return ResponseEntity.ok(modifiedUser)
     }
 
     @DeleteMapping("/{id}")
     fun deleteUser(@PathVariable id: Long) : ResponseEntity<String> {
-        userSvc.getById(id)
+        if (!userRepo.existsById(id))
+            throw ResourceNotFoundException()
+
         userRepo.deleteById(id)
         return ResponseEntity.ok("User '$id' have been successfully deleted")
     }

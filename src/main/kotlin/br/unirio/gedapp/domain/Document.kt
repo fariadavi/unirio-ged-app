@@ -11,33 +11,33 @@ import java.time.LocalDateTime
 @Document(indexName = "documents")
 data class Document(
 
+    @Id @Field(type = FieldType.Text)
+    val id: String? = null,
+
     @Field(type = FieldType.Text, name = "department_acronym")
-    val tenant: String,
+    val tenant: String = "",
 
     @Field(type = FieldType.Text)
-    val fileName: String,
+    val fileName: String = "",
 
     @Field(type = FieldType.Text)
-    val title: String,
+    val title: String = "",
 
     @Field(type = FieldType.Text)
-    val summary: String,
+    val summary: String = "",
 
     @Field(type = FieldType.Date, format = DateFormat.date)
-    val date: LocalDate,
+    val date: LocalDate? = null,
 
     @Field(type = FieldType.Text)
-    val content: String,
+    val content: String = "",
 
     @Field(type = FieldType.Long, name = "category_id")
-    val category: Long,
+    val category: Long = -1L,
 
     @Field(type = FieldType.Long, name = "platform_user_id")
-    val registeredBy: Long,
+    val registeredBy: Long = -1L,
 
     @Field(type = FieldType.Date, format = DateFormat.date_time)
-    val registeredAt: LocalDateTime,
-
-    @Id @Field(type = FieldType.Text)
-    val id: String? = null
+    val registeredAt: LocalDateTime? = null
 )
