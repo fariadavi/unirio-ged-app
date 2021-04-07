@@ -27,7 +27,7 @@ data class User(
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "department_id")
-    val currentDepartment: Department? = null,
+    val currentDepartment: Department?,
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -35,10 +35,10 @@ data class User(
         joinColumns = [JoinColumn(name = "platform_user_id", referencedColumnName = "id")],
         inverseJoinColumns = [JoinColumn(name = "department_id", referencedColumnName = "id")]
     )
-    val departments: Set<Department>? = mutableSetOf(),
+    val departments: Set<Department>?,
 
     @Type(type = "enum-set", parameters = [Parameter(name = "enumClass", value = "br.unirio.gedapp.domain.Permission")])
-    val permissions: EnumSet<Permission>? = EnumSet.noneOf(Permission::class.java)
+    val permissions: EnumSet<Permission>?
 
 ) : UserDetails {
 
