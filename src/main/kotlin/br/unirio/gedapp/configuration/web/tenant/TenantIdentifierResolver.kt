@@ -18,7 +18,7 @@ class TenantIdentifierResolver : CurrentTenantIdentifierResolver {
                 ?.takeUnless { it is AnonymousAuthenticationToken }?.principal
                 ?.takeIf { it is User }
                 ?.let { it as User }
-            )?.currentDepartment?.acronym
+            )?.currentDepartment?.acronym?.toLowerCase()
         ?: DEFAULT_TENANT
 
     override fun validateExistingCurrentSessions(): Boolean = true
