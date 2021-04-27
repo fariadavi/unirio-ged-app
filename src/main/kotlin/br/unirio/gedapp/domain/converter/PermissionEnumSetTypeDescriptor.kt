@@ -40,9 +40,6 @@ class PermissionEnumSetTypeDescriptor : AbstractTypeDescriptor<EnumSet<*>>(EnumS
         }
 
     override fun <X> unwrap(value: EnumSet<*>, type: Class<X>, options: WrapperOptions?): X? {
-        if (value == null)
-            return null
-
         if (EnumSet::class.java.isAssignableFrom(type))
             return value as X
 

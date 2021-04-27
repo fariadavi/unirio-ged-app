@@ -36,10 +36,10 @@ class UserService(val userRepo: UserRepository) : UserDetailsService {
             updatedUser = updatedUser.copy(currentDepartment = newDataUser.currentDepartment)
 
         if (newDataUser.departments != null)
-            updatedUser = updatedUser.copy(departments = newDataUser.departments!!)
+            updatedUser = updatedUser.copy(departments = newDataUser.departments)
 
         if (newDataUser.permissions != null)
-            updatedUser = updatedUser.copy(permissions = newDataUser.permissions!!)
+            updatedUser = updatedUser.copy(permissions = newDataUser.permissions)
 
         return userRepo.save(updatedUser)
     }
