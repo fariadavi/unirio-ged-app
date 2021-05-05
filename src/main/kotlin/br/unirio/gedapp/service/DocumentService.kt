@@ -5,6 +5,7 @@ import br.unirio.gedapp.configuration.yml.StorageConfig
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.DocumentStatus
+import br.unirio.gedapp.domain.dto.DocumentDTO
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.util.FileUtils
 import org.apache.tika.Tika
@@ -18,6 +19,8 @@ import kotlin.concurrent.thread
 @Service
 class DocumentService(
     @Autowired storageConfig: StorageConfig,
+    private val catSvc: CategoryService,
+    private val userSvc: UserService,
     private val docRepo: DocumentRepository,
     private val tenantResolver: TenantIdentifierResolver
 ) {
@@ -111,9 +114,21 @@ class DocumentService(
         fileUtils.deleteFile(existingDoc.tenant, id, existingDoc.fileName)
     }
 
-    fun queryDocuments(queryString: String): Iterable<Document> =
+    fun queryDocuments(queryString: String): List<DocumentDTO> =
         docRepo.findByTenantAndContentMatches(
             tenantResolver.resolveCurrentTenantIdentifier(),
             queryString
-        )
+        ).map { createDTO(it) }
+
+    fun createDTO(document: Document): DocumentDTO {
+        val documentDTO = DocumentDTO(document)
+
+        val category = catSvc.getById(document.category)
+        documentDTO.category = category.name
+        documentDTO.fullCategoryHierarchy = catSvc.getCategoryAncestorsFlattened(category)
+
+        documentDTO.registeredBy = userSvc.getById(document.registeredBy).fullName
+
+        return documentDTO
+    }
 }

@@ -1,6 +1,7 @@
 package br.unirio.gedapp.domain
 
 import javax.persistence.*
+import kotlin.jvm.Transient
 
 @Entity
 data class Category(
@@ -12,4 +13,7 @@ data class Category(
 
     @ManyToOne(fetch = FetchType.EAGER)
     val parent: Category? = null
-)
+) {
+    @Transient
+     var fullName: String? = null
+}

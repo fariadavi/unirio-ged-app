@@ -63,4 +63,7 @@ data class User(
 
     @JsonIgnore
     override fun isEnabled(): Boolean = permissions?.isNotEmpty() ?: false
+
+    val fullName: String
+        get() = "${this.firstName} ${this.surname}"
 }
