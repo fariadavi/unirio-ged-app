@@ -29,3 +29,7 @@ security:
         prefix: Bearer
         secret: #jwt secret key
         expiration: 43200
+
+application:
+    storage:
+        path: #server path where document files should be stored
