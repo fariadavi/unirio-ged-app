@@ -9,6 +9,9 @@ import java.nio.file.Path
 
 class FileUtils(private val storageConfig: StorageConfig) {
 
+    fun getFilePath(tenant: String, docId: String, fileName: String): Path =
+        Path.of(storageConfig.path, tenant, "${docId}_${fileName}")
+
     fun getFile(document: Document): File =
         getFile(document.tenant, document.id!!, document.fileName)
 

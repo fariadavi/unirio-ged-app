@@ -7,10 +7,12 @@ import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.DocumentStatus
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.util.FileUtils
+import org.apache.tika.Tika
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
+import java.nio.file.Path
 import kotlin.concurrent.thread
 
 @Service
@@ -73,19 +75,31 @@ class DocumentService(
                 fileUtils.deleteFile(doc.tenant, doc.id!!, doc.fileName)
 
             processFile(doc)
+
+            //TODO somehow notify user that the file status has been updated for either success or fail
         }
     }
 
     private fun processFile(doc: Document) {
-        val file = fileUtils.getFile(doc)
+        val filepath = fileUtils.getFilePath(doc.tenant, doc.id!!, doc.fileName)
         docRepo.save(doc.copy(status = DocumentStatus.PROCESSING))
 
-        var (docContent, extractionStatus) = extractContents(file)
+        var (docContent, extractionStatus) = extractContents(filepath)
         docRepo.save(doc.copy(status = extractionStatus, content = docContent))
     }
 
-    // TODO extract text content from file and return doc status accordingly
-    private fun extractContents(file: File) = Pair("", DocumentStatus.SUCCESS)
+    private fun extractContents(filepath: Path): Pair<String, DocumentStatus> {
+        var docContent = ""
+        var extractionStatus = DocumentStatus.SUCCESS
+
+        try {
+            docContent = Tika().parseToString(filepath)
+        } catch (e: Exception) {
+            extractionStatus = DocumentStatus.FAILED
+        }
+
+        return Pair(docContent, extractionStatus)
+    }
 
     fun deleteById(id: String) {
         var existingDoc = getById(id)
