@@ -1,17 +1,24 @@
 package br.unirio.gedapp.service
 
+import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Document
+import br.unirio.gedapp.domain.DocumentStatus
 import br.unirio.gedapp.repository.DocumentRepository
 import org.springframework.stereotype.Service
 
 @Service
-class DocumentService(val docRepo: DocumentRepository) {
+class DocumentService(
+    private val docRepo: DocumentRepository,
+    private val tenantResolver: TenantIdentifierResolver
+) {
 
     fun getById(id: String): Document =
         docRepo
             .findById(id)
             .orElseThrow { ResourceNotFoundException() }
+            .takeIf { it.tenant == tenantResolver.resolveCurrentTenantIdentifier() }
+            ?: throw ResourceNotFoundException()
 
     fun update(docId: String, newDataDoc: Document): Document {
         var existingDoc = getById(docId)
@@ -36,4 +43,15 @@ class DocumentService(val docRepo: DocumentRepository) {
 
         return docRepo.save(existingDoc)
     }
+
+    fun deleteById(id: String) {
+        getById(id)
+        docRepo.deleteById(id)
+    }
+
+    fun queryDocuments(queryString: String): Iterable<Document> =
+        docRepo.findByTenantAndContentMatches(
+            tenantResolver.resolveCurrentTenantIdentifier(),
+            queryString
+        )
 }

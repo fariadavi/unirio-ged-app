@@ -1,7 +1,5 @@
 package br.unirio.gedapp.controller
 
-import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver
-import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.service.DocumentService
@@ -14,15 +12,13 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/documents")
 class DocumentController(
     @Autowired private val docSvc: DocumentService,
-    @Autowired private val docRepo: DocumentRepository,
-    @Autowired private val tenantResolver: TenantIdentifierResolver
+    @Autowired private val docRepo: DocumentRepository
 ) {
 
     @GetMapping("/{id}")
-    fun getDocument(@PathVariable id: String): ResponseEntity<Document> {
-        val doc = docSvc.getById(id)
-        return ResponseEntity.ok(doc)
-    }
+    fun getDocument(@PathVariable id: String) =
+        ResponseEntity.ok(
+            docSvc.getById(id))
 
     @PostMapping
     fun addDocument(@RequestBody doc: Document): ResponseEntity<Document> {
@@ -37,17 +33,12 @@ class DocumentController(
     }
 
     @DeleteMapping("/{id}")
-    fun deleteDocument(@PathVariable id: String) : ResponseEntity<String> {
-        if (!docRepo.existsById(id))
-            throw ResourceNotFoundException()
-
-        docRepo.deleteById(id)
+    fun deleteDocument(@PathVariable id: String): ResponseEntity<String> {
+        docSvc.deleteById(id)
         return ResponseEntity.ok("Document '$id' have been successfully deleted")
     }
 
     @GetMapping("/search")
     fun searchDocuments(@RequestParam q: String) =
-        docRepo.findByTenantAndContentMatches(
-            tenantResolver.resolveCurrentTenantIdentifier(),
-            q)
+        docSvc.queryDocuments(q)
 }

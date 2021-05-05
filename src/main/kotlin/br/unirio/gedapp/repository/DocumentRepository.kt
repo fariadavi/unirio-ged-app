@@ -7,7 +7,7 @@ interface DocumentRepository : ElasticsearchRepository<Document, String> {
 
     fun countByTenant(tenant: String): Int
 
-    fun findAllByTenant(tenant: String): List<Document>
+    fun findAllByTenant(tenant: String): Iterable<Document>
 
-    fun findByTenantAndContentMatches(tenant: String, text: String): List<Document>
+    fun findByTenantAndContentMatches(tenant: String, text: String): Iterable<Document>
 }

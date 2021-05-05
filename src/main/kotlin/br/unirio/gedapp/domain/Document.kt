@@ -32,6 +32,9 @@ data class Document(
     @Field(type = FieldType.Text)
     val content: String = "",
 
+    @Field(type = FieldType.Text)
+    val status: DocumentStatus = DocumentStatus.NOT_PROCESSED,
+
     @Field(type = FieldType.Long, name = "category_id")
     val category: Long = -1L,
 
