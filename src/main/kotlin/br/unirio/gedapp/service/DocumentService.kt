@@ -47,7 +47,7 @@ class DocumentService(
         if (newDataDoc.title.isNotBlank())
             existingDoc = existingDoc.copy(title = newDataDoc.title)
 
-        if (newDataDoc.summary.isNotBlank())
+        if (newDataDoc.summary != null)
             existingDoc = existingDoc.copy(summary = newDataDoc.summary)
 
         if (newDataDoc.date != null)

@@ -24,7 +24,7 @@ data class Document(
     val title: String = "",
 
     @Field(type = FieldType.Text)
-    val summary: String = "",
+    val summary: String? = null,
 
     @Field(type = FieldType.Date, format = DateFormat.date)
     val date: LocalDate? = null,
