@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/documents")
@@ -20,17 +21,20 @@ class DocumentController(
         ResponseEntity.ok(
             docSvc.getById(id))
 
-    @PostMapping
-    fun addDocument(@RequestBody doc: Document): ResponseEntity<Document> {
-        val createdDoc = docRepo.save(doc)
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDoc)
-    }
+    @PostMapping(consumes = ["multipart/form-data"])
+    fun addDocument(
+        @RequestPart document: Document,
+        @RequestPart file: MultipartFile
+    ) = ResponseEntity.status(HttpStatus.CREATED).body(
+            docSvc.insert(document, file))
 
-    @PatchMapping("/{id}")
-    fun updateDocument(@PathVariable id : String, @RequestBody newDataDoc: Document): ResponseEntity<Document> {
-        val modifiedDoc = docSvc.update(id, newDataDoc)
-        return ResponseEntity.ok(modifiedDoc)
-    }
+    @PatchMapping("/{id}", consumes = ["multipart/form-data"])
+    fun updateDocument(
+        @PathVariable id: String,
+        @RequestPart document: Document,
+        @RequestPart(required = false) file: MultipartFile?
+    ) = ResponseEntity.ok(
+            docSvc.update(id, document, file))
 
     @DeleteMapping("/{id}")
     fun deleteDocument(@PathVariable id: String): ResponseEntity<String> {

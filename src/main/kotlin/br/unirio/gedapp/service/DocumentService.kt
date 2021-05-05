@@ -6,6 +6,7 @@ import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.DocumentStatus
 import br.unirio.gedapp.repository.DocumentRepository
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 
 @Service
 class DocumentService(
@@ -20,7 +21,10 @@ class DocumentService(
             .takeIf { it.tenant == tenantResolver.resolveCurrentTenantIdentifier() }
             ?: throw ResourceNotFoundException()
 
-    fun update(docId: String, newDataDoc: Document): Document {
+    fun insert(document: Document, file: MultipartFile): Document =
+        docRepo.save(document.copy(fileName = file.originalFilename!!))
+
+    fun update(docId: String, newDataDoc: Document, file: MultipartFile?): Document {
         var existingDoc = getById(docId)
 
         if (newDataDoc.fileName.isNotBlank())

@@ -14,6 +14,12 @@ spring:
             uris: http://localhost:9200
     jackson:
         serialization.indent_output: true
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 20MB
+            max-request-size: 20MB
+            location: #temp server path where uploaded files should go before being parsed
 
 security:
     auth:
