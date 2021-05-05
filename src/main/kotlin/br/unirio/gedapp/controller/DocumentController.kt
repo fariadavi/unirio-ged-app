@@ -4,7 +4,9 @@ import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.service.DocumentService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -45,4 +47,14 @@ class DocumentController(
     @GetMapping("/search")
     fun searchDocuments(@RequestParam q: String) =
         docSvc.queryDocuments(q)
+
+    @GetMapping("/{id}/download")
+    fun downloadDocumentFile(@PathVariable id: String): ResponseEntity<ByteArray> {
+        val doc = docSvc.getById(id)
+        val file = docSvc.getFile(doc)
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${doc.fileName}\"")
+            .body(file.readBytes());
+    }
 }

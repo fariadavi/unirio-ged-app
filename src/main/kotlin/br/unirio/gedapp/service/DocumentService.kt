@@ -23,6 +23,9 @@ class DocumentService(
 ) {
     val fileUtils = FileUtils(storageConfig)
 
+    fun getFile(document: Document) =
+        fileUtils.getFile(document.tenant, document.id!!, document.fileName)
+
     fun getById(id: String): Document =
         docRepo
             .findById(id)
@@ -56,7 +59,7 @@ class DocumentService(
         if (file?.originalFilename != null) {
             existingDoc = existingDoc.copy(fileName = file.originalFilename!!)
 
-            val existingDocFile = fileUtils.getFile(existingDoc)
+            val existingDocFile = getFile(existingDoc)
             if (!existingDocFile.readBytes().contentEquals(file.bytes)) {
                 existingDoc = existingDoc.copy(status = DocumentStatus.NOT_PROCESSED, content = "")
 

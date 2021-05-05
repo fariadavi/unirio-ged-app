@@ -1,7 +1,6 @@
 package br.unirio.gedapp.util
 
 import br.unirio.gedapp.configuration.yml.StorageConfig
-import br.unirio.gedapp.domain.Document
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.nio.file.Files
@@ -11,9 +10,6 @@ class FileUtils(private val storageConfig: StorageConfig) {
 
     fun getFilePath(tenant: String, docId: String, fileName: String): Path =
         Path.of(storageConfig.path, tenant, "${docId}_${fileName}")
-
-    fun getFile(document: Document): File =
-        getFile(document.tenant, document.id!!, document.fileName)
 
     fun getFile(tenant: String, docId: String, fileName: String): File =
         Path.of(storageConfig.path, tenant, "${docId}_${fileName}").toFile()
