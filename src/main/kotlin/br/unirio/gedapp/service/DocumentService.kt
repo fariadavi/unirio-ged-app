@@ -60,14 +60,15 @@ class DocumentService(
             existingDoc = existingDoc.copy(category = newDataDoc.category)
 
         if (file?.originalFilename != null) {
-            existingDoc = existingDoc.copy(fileName = file.originalFilename!!)
-
             val existingDocFile = getFile(existingDoc)
+
             if (!existingDocFile.readBytes().contentEquals(file.bytes)) {
                 existingDoc = existingDoc.copy(status = DocumentStatus.NOT_PROCESSED, content = "")
 
                 updateDocumentFile(existingDoc, file, existingDocFile)
             }
+
+            existingDoc = existingDoc.copy(fileName = file.originalFilename!!)
         }
 
         return docRepo.save(existingDoc)
@@ -78,7 +79,7 @@ class DocumentService(
         thread {
             fileUtils.transferFile(file, doc.tenant, doc.id!!)
             if (currentFile != null)
-                fileUtils.deleteFile(doc.tenant, doc.id!!, doc.fileName)
+                fileUtils.deleteFile(doc.tenant, currentFile.name)
 
             processFile(doc)
 

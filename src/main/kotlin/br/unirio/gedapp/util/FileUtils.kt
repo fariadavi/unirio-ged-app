@@ -26,6 +26,9 @@ class FileUtils(private val storageConfig: StorageConfig) {
         )
     }
 
+    fun deleteFile(tenant: String, fileName: String) =
+        Files.deleteIfExists(Path.of(storageConfig.path, tenant, fileName))
+
     fun deleteFile(tenant: String, docId: String, fileName: String) =
         Files.deleteIfExists(Path.of(storageConfig.path, tenant, "${docId}_${fileName}"))
 }
