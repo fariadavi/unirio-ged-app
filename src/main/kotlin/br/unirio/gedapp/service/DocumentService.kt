@@ -87,7 +87,7 @@ class DocumentService(
         val filepath = fileUtils.getFilePath(doc.tenant, doc.id!!, doc.fileName)
         docRepo.save(doc.copy(status = DocumentStatus.PROCESSING))
 
-        var (docContent, extractionStatus) = extractContents(filepath)
+        val (docContent, extractionStatus) = extractContents(filepath)
         docRepo.save(doc.copy(status = extractionStatus, content = docContent))
     }
 
@@ -105,7 +105,7 @@ class DocumentService(
     }
 
     fun deleteById(id: String) {
-        var existingDoc = getById(id)
+        val existingDoc = getById(id)
         docRepo.deleteById(id)
 
         fileUtils.deleteFile(existingDoc.tenant, id, existingDoc.fileName)
