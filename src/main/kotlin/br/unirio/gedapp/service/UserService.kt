@@ -3,6 +3,8 @@ package br.unirio.gedapp.service
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.User
 import br.unirio.gedapp.repository.UserRepository
+import org.springframework.security.authentication.AnonymousAuthenticationToken
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.stereotype.Service
@@ -45,5 +47,14 @@ class UserService(val userRepo: UserRepository) : UserDetailsService {
     }
 
     override fun loadUserByUsername(email: String): UserDetails = getByEmail(email)
+
+    fun getCurrentUser(): User {
+        val auth = SecurityContextHolder.getContext().authentication
+        if (auth is AnonymousAuthenticationToken)
+            throw ResourceNotFoundException()
+
+        val userEmail = auth.name
+        return getByEmail(userEmail)
+    }
 }
 

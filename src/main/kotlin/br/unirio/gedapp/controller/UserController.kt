@@ -38,13 +38,13 @@ class UserController(
     }
 
     @PatchMapping("/{id}")
-    fun updateUser(@PathVariable id : Long, @RequestBody newDataUser: User): ResponseEntity<User> {
+    fun updateUser(@PathVariable id: Long, @RequestBody newDataUser: User): ResponseEntity<User> {
         val modifiedUser = userSvc.update(id, newDataUser)
         return ResponseEntity.ok(modifiedUser)
     }
 
     @DeleteMapping("/{id}")
-    fun deleteUser(@PathVariable id: Long) : ResponseEntity<String> {
+    fun deleteUser(@PathVariable id: Long): ResponseEntity<String> {
         if (!userRepo.existsById(id))
             throw ResourceNotFoundException()
 
@@ -53,13 +53,10 @@ class UserController(
     }
 
     @GetMapping("/loggedUserInfo")
-    fun getLoggedUserInfo(): ResponseEntity<User> {
-        val auth = SecurityContextHolder.getContext().authentication
-        if (auth is AnonymousAuthenticationToken)
+    fun getLoggedUserInfo(): ResponseEntity<User> =
+        try {
+            ResponseEntity.ok(userSvc.getCurrentUser())
+        } catch (e: ResourceNotFoundException) {
             throw UnauthorizedException()
-
-        val userEmail = auth.name
-        val user = userSvc.getByEmail(userEmail)
-        return ResponseEntity.ok(user)
-    }
+        }
 }

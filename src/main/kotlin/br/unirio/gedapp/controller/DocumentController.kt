@@ -4,12 +4,11 @@ import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.service.DocumentService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
+import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDate
 
 @RestController
 @RequestMapping("/documents")
@@ -17,6 +16,11 @@ class DocumentController(
     @Autowired private val docSvc: DocumentService,
     @Autowired private val docRepo: DocumentRepository
 ) {
+
+    @GetMapping
+    fun getAllDocuments() =
+        ResponseEntity.ok(
+            docRepo.findAll())
 
     @GetMapping("/{id}")
     fun getDocument(@PathVariable id: String) =
@@ -45,16 +49,22 @@ class DocumentController(
     }
 
     @GetMapping("/search")
-    fun searchDocuments(@RequestParam q: String) =
-        docSvc.queryDocuments(q)
+    fun searchDocuments(@RequestParam q: String,
+                        @RequestParam(required = false, defaultValue = "1") page: Int,
+                        @RequestParam(required = false, defaultValue = "2") pageSize: Int,
+                        @RequestParam(required = false) category: Long?,
+                        @RequestParam(required = false, defaultValue = "false") myDocuments: Boolean,
+                        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") minDate: LocalDate?,
+                        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") maxDate: LocalDate?) =
+        docSvc.queryDocuments(q, page, pageSize, minDate, maxDate, category, myDocuments)
 
     @GetMapping("/{id}/download")
     fun downloadDocumentFile(@PathVariable id: String): ResponseEntity<ByteArray> {
         val doc = docSvc.getById(id)
         val file = docSvc.getFile(doc)
         return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${doc.fileName}\"")
-            .body(file.readBytes());
+            .contentType(MediaType.parseMediaType(doc.mediaType ?: MediaType.APPLICATION_OCTET_STREAM.toString()))
+            .body(file.readBytes())
     }
 }

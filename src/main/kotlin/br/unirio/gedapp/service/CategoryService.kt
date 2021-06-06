@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service
 @Service
 class CategoryService(val catRepo: CategoryRepository) {
 
+    fun existsById(id: Long): Boolean = catRepo.existsById(id)
+
     fun getById(id: Long): Category =
         catRepo
             .findById(id)

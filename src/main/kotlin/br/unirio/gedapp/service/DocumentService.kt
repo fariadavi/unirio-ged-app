@@ -6,6 +6,7 @@ import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.DocumentStatus
 import br.unirio.gedapp.domain.dto.DocumentDTO
+import br.unirio.gedapp.domain.dto.SearchDocumentsResultDTO
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.util.FileUtils
 import org.apache.tika.Tika
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.nio.file.Path
+import java.time.LocalDate
 import kotlin.concurrent.thread
 
 @Service
@@ -63,7 +65,7 @@ class DocumentService(
             val existingDocFile = getFile(existingDoc)
 
             if (!existingDocFile.readBytes().contentEquals(file.bytes)) {
-                existingDoc = existingDoc.copy(status = DocumentStatus.NOT_PROCESSED, content = "")
+                existingDoc = existingDoc.copy(status = DocumentStatus.NOT_PROCESSED, content = "", mediaType = null)
 
                 updateDocumentFile(existingDoc, file, existingDocFile)
             }
@@ -81,7 +83,7 @@ class DocumentService(
             if (currentFile != null)
                 fileUtils.deleteFile(doc.tenant, currentFile.name)
 
-            processFile(doc)
+            processFile(doc.copy(fileName = file.originalFilename!!))
 
             //TODO somehow notify user that the file status has been updated for either success or fail
         }
@@ -89,23 +91,31 @@ class DocumentService(
 
     private fun processFile(doc: Document) {
         val filepath = fileUtils.getFilePath(doc.tenant, doc.id!!, doc.fileName)
-        docRepo.save(doc.copy(status = DocumentStatus.PROCESSING))
+        var docCopy = docRepo.save(doc.copy(status = DocumentStatus.PROCESSING))
 
-        val (docContent, extractionStatus) = extractContents(filepath)
-        docRepo.save(doc.copy(status = extractionStatus, content = docContent))
+        val (docContent, mediaType, extractionStatus) = extractContents(filepath)
+        docCopy = docCopy.copy(content = docContent, mediaType = mediaType, status = extractionStatus)
+        
+        if (extractionStatus !== DocumentStatus.SUCCESS)
+            docCopy = doc.copy(content = "", mediaType = null)
+        
+        docRepo.save(docCopy)
     }
 
-    private fun extractContents(filepath: Path): Pair<String, DocumentStatus> {
+    private fun extractContents(filepath: Path): Triple<String, String, DocumentStatus> {
         var docContent = ""
+        var mediaType = ""
         var extractionStatus = DocumentStatus.SUCCESS
 
         try {
             docContent = Tika().parseToString(filepath)
+            mediaType = Tika().detect(filepath)
         } catch (e: Exception) {
             extractionStatus = DocumentStatus.FAILED
+            e.printStackTrace()
         }
 
-        return Pair(docContent, extractionStatus)
+        return Triple(docContent, mediaType, extractionStatus)
     }
 
     fun deleteById(id: String) {
@@ -115,11 +125,31 @@ class DocumentService(
         fileUtils.deleteFile(existingDoc.tenant, id, existingDoc.fileName)
     }
 
-    fun queryDocuments(queryString: String): List<DocumentDTO> =
-        docRepo.findByTenantAndContentMatches(
+    fun queryDocuments(queryString: String,
+                       page: Int,
+                       pageSize: Int,
+                       minDate: LocalDate?,
+                       maxDate: LocalDate?,
+                       categoryId: Long?,
+                       onlyMyDocs: Boolean): SearchDocumentsResultDTO {
+        if (categoryId != null && !catSvc.existsById(categoryId))
+            throw ResourceNotFoundException()
+
+        val userId = if (onlyMyDocs) userSvc.getCurrentUser().id else null
+
+        val (totalHits, docs) = docRepo.queryDocuments(
             tenantResolver.resolveCurrentTenantIdentifier(),
-            queryString
-        ).map { createDTO(it) }
+            queryString,
+            page,
+            pageSize,
+            categoryId,
+            userId,
+            minDate,
+            maxDate
+        )
+
+        return SearchDocumentsResultDTO(page, pageSize, totalHits, docs.map { createDTO(it) })
+    }
 
     fun createDTO(document: Document): DocumentDTO {
         val documentDTO = DocumentDTO(document)
