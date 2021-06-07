@@ -31,7 +31,7 @@ class DocumentService(
     fun getFile(document: Document) =
         fileUtils.getFile(document.tenant, document.id!!, document.fileName)
 
-    fun getById(id: String): Document =
+    fun getById(id: String) =
         docRepo
             .findById(id)
             .orElseThrow { ResourceNotFoundException() }

@@ -1,6 +1,6 @@
 package br.unirio.gedapp.domain
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonAlias
 import org.springframework.data.annotation.Id
 import org.springframework.data.elasticsearch.annotations.DateFormat
 import org.springframework.data.elasticsearch.annotations.Document
@@ -39,11 +39,11 @@ data class Document(
     @Field(type = FieldType.Keyword)
     val status: DocumentStatus = DocumentStatus.NOT_PROCESSED,
 
-    @JsonProperty("category_id")
+    @JsonAlias("category_id")
     @Field(type = FieldType.Long, name = "category_id")
     val category: Long = -1L,
 
-    @JsonProperty("platform_user_id")
+    @JsonAlias("platform_user_id")
     @Field(type = FieldType.Long, name = "platform_user_id")
     val registeredBy: Long = -1L,
 
