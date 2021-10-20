@@ -8,8 +8,6 @@ import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.authentication.AnonymousAuthenticationToken
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -29,6 +27,12 @@ class UserController(
     fun getAllUsers(): ResponseEntity<Iterable<User>> {
         val allUsers = userRepo.findAll()
         return ResponseEntity.ok(allUsers)
+    }
+
+    @GetMapping("/department/{id}")
+    fun getAllUsersFromDepartment(@PathVariable id: Long): ResponseEntity<Iterable<User>> {
+        val usersFromDept = userRepo.findByDepartmentsId(id)
+        return ResponseEntity.ok(usersFromDept)
     }
 
     @PostMapping
