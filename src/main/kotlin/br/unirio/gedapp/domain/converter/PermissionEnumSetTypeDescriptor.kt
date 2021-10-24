@@ -10,7 +10,7 @@ import org.hibernate.type.descriptor.java.AbstractTypeDescriptor
 class PermissionEnumSetTypeDescriptor : AbstractTypeDescriptor<EnumSet<*>>(EnumSet::class.java) {
 
     companion object {
-        private const val SEPARATOR: String = ";"
+        private const val SEPARATOR: String = ","
     }
 
     override fun toString(set: EnumSet<*>): String = set.joinToString(SEPARATOR)
@@ -27,13 +27,12 @@ class PermissionEnumSetTypeDescriptor : AbstractTypeDescriptor<EnumSet<*>>(EnumS
             }
             .toList()
 
-        return if (list.isNotEmpty()) EnumSet.copyOf(list) else null
+        return if (list.isNotEmpty()) EnumSet.copyOf(list) else EnumSet.noneOf(Permission::class.java)
     }
-
 
     override fun <X> wrap(value: X, options: WrapperOptions): EnumSet<*>? =
         when (value) {
-            null -> null
+            null -> EnumSet.noneOf(Permission::class.java)
             is EnumSet<*> -> value
             is String -> fromString(value)
             else -> throw unknownWrap(value.javaClass)
