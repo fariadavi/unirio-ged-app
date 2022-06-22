@@ -29,13 +29,20 @@ class AuthenticationFilter(
                 val claims: Claims = jwtProvider.getClaimsFromJWT(token)
                 val email = claims.subject
 
-                val userDetails: UserDetails = userSvc.loadUserByUsername(email)
-                val authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+                var userDetails: UserDetails = userSvc.loadUserByUsername(email)
+                var authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+
+                SecurityContextHolder.getContext().authentication = authenticationTokenObj
+
+                //TODO this is a gambiarra. needs to be fixed
+                userDetails = userSvc.loadUserByUsername(email)
+                authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
                 authenticationTokenObj.details = WebAuthenticationDetailsSource().buildDetails(req)
 
                 SecurityContextHolder.getContext().authentication = authenticationTokenObj
 
             } catch (e: Exception) {
+                logger.error("Erro no filtro de autenticação")
                 SecurityContextHolder.clearContext()
             }
         }

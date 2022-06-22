@@ -1,8 +1,8 @@
 spring:
     datasource:
-        url: jdbc:postgresql://localhost:5432/ged-app-unirio-db
-        username: postgres
-        password: 1234
+        url: ${DATABASE.POSTGRESQL.PATH}
+        username: ${DATABASE.POSTGRESQL.USERNAME}
+        password: ${DATABASE.POSTGRESQL.PASSWORD}
     jpa:
         database: postgresql
         hibernate:
@@ -11,7 +11,7 @@ spring:
         show-sql: true
     elasticsearch:
         rest:
-            uris: http://localhost:9200
+            uris: ${DATABASE.ELASTICSEARCH.PATH}
     jackson:
         serialization.indent_output: true
     servlet:
@@ -19,17 +19,17 @@ spring:
             enabled: true
             max-file-size: 20MB
             max-request-size: 20MB
-            location: #temp server path where uploaded files should go before being parsed
+            location: ${FILE.STORAGE.PATH}
 
 security:
     auth:
-        client-id: #auth client-id
+        client-id: ${AUTH.CLIENTID}
     jwt:
         header: Authorization
         prefix: Bearer
-        secret: #jwt secret key
+        secret: ${JWT.SECRET.KEY}
         expiration: 43200
 
 application:
     storage:
-        path: #server path where document files should be stored
+        path: ${FILE.STORAGE.PATH}

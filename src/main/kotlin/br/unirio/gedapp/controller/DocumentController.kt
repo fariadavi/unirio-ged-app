@@ -48,10 +48,16 @@ class DocumentController(
         return ResponseEntity.ok("Document '$id' have been successfully deleted")
     }
 
+    @DeleteMapping
+    fun deleteAllDocuments(): ResponseEntity<String> {
+        docRepo.deleteAll()
+        return ResponseEntity.ok("Documents have been successfully deleted")
+    }
+
     @GetMapping("/search")
     fun searchDocuments(@RequestParam q: String,
                         @RequestParam(required = false, defaultValue = "1") page: Int,
-                        @RequestParam(required = false, defaultValue = "2") pageSize: Int,
+                        @RequestParam(required = false, defaultValue = "10") pageSize: Int,
                         @RequestParam(required = false) category: Long?,
                         @RequestParam(required = false, defaultValue = "false") myDocuments: Boolean,
                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") minDate: LocalDate?,

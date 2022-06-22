@@ -1,18 +1,13 @@
 package br.unirio.gedapp.domain
 
-import br.unirio.gedapp.domain.converter.EnumSetType
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.hibernate.annotations.Parameter
-import org.hibernate.annotations.Type
-import org.hibernate.annotations.TypeDef
-import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.util.*
 import javax.persistence.*
 
 @Entity
 @Table(name = "platform_user", schema = "public")
-@TypeDef(name = "enum-set", typeClass = EnumSetType::class)
 data class User(
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +22,7 @@ data class User(
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "department_id")
-    val currentDepartment: Department?,
+    val currentDepartment: Department? = null,
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -35,16 +30,24 @@ data class User(
         joinColumns = [JoinColumn(name = "platform_user_id", referencedColumnName = "id")],
         inverseJoinColumns = [JoinColumn(name = "department_id", referencedColumnName = "id")]
     )
-    val departments: Set<Department>?,
+    val departments: Set<Department>? = null,
 
-    @Type(type = "enum-set", parameters = [Parameter(name = "enumClass", value = "br.unirio.gedapp.domain.Permission")])
-    val permissions: EnumSet<Permission>?
+    @OneToOne(mappedBy = "user")
+    @JsonIgnore
+    val userPermission: UserPermission? = null,
+
+    @OneToOne(mappedBy = "user")
+    @JsonIgnore
+    val userPublicPermission: UserPublicPermission? = null
 
 ) : UserDetails {
 
-    //TODO Granted Authorities will be based on User Permissions
     @JsonIgnore
-    override fun getAuthorities(): Collection<GrantedAuthority> = emptyList()
+    override fun getAuthorities(): List<SimpleGrantedAuthority> {
+        val publicAuthorities = userPublicPermission?.permissions?.map { SimpleGrantedAuthority(it.toString()) } ?: emptyList()
+        val tenantAuthorities = userPermission?.permissions?.map { SimpleGrantedAuthority(it.toString()) } ?: emptyList()
+        return mutableListOf<SimpleGrantedAuthority>().plus(publicAuthorities).plus(tenantAuthorities)
+    }
 
     @JsonIgnore
     override fun getPassword(): String = ""
@@ -62,8 +65,11 @@ data class User(
     override fun isCredentialsNonExpired(): Boolean = true
 
     @JsonIgnore
-    override fun isEnabled(): Boolean = permissions?.isNotEmpty() ?: false
+    override fun isEnabled(): Boolean = userPermission?.permissions?.isNotEmpty() ?: false
 
     val fullName: String
         get() = "$firstName $surname"
+
+    val permissions: Array<String>
+        get() = authorities.map { it.authority }.toTypedArray()
 }

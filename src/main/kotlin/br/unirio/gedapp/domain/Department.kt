@@ -1,6 +1,5 @@
 package br.unirio.gedapp.domain
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import javax.persistence.*
 
 @Entity
