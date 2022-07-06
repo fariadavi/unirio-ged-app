@@ -11,7 +11,7 @@ CREATE TABLE category (
 CREATE TABLE user_permission (
     id			        BIGINT GENERATED ALWAYS AS IDENTITY,
     platform_user_id    BIGINT,
-    permissions         VARCHAR(40) NOT NULL,
+    permissions         VARCHAR(255) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT fk_platform_user
       FOREIGN KEY(platform_user_id)
