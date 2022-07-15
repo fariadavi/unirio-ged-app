@@ -4,7 +4,6 @@ import br.unirio.gedapp.configuration.web.filter.AuthenticationFilter
 import br.unirio.gedapp.configuration.yml.JwtConfig
 import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
-import com.google.common.collect.ImmutableList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -34,23 +33,30 @@ class SecurityConfig(
 
     override fun configure(http: HttpSecurity) {
         http
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .addFilterBefore(AuthenticationFilter(jwtConfig, tokenProvider, userSvc), UsernamePasswordAuthenticationFilter::class.java)
-            .authorizeRequests()
-            .antMatchers("/**").permitAll()
+            .cors()
             .and()
             .csrf().disable()
-            .headers().frameOptions().disable()
+            .headers().frameOptions().sameOrigin()
+            .and()
+            .authorizeRequests()
+            .antMatchers("/api/auth/**").permitAll()
+            .anyRequest().authenticated()
+            .and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .addFilterBefore(
+                AuthenticationFilter(jwtConfig, tokenProvider, userSvc),
+                UsernamePasswordAuthenticationFilter::class.java
+            )
     }
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = ImmutableList.of("*")
-        configuration.allowedMethods = ImmutableList.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH")
+        configuration.allowedOrigins = listOf("http://localhost:3000")
+        configuration.allowedMethods = listOf("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH")
         configuration.allowCredentials = true
-        configuration.allowedHeaders = ImmutableList.of("Authorization", "Cache-Control", "Content-Type")
+        configuration.allowedHeaders = listOf("Authorization", "Cache-Control", "Content-Type")
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)

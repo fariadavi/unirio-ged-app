@@ -29,12 +29,15 @@ class AuthenticationFilter(
                 val claims: Claims = jwtProvider.getClaimsFromJWT(token)
                 val email = claims.subject
 
+                // load user info from the public schema and set it in the context
                 var userDetails: UserDetails = userSvc.loadUserByUsername(email)
                 var authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
 
                 SecurityContextHolder.getContext().authentication = authenticationTokenObj
 
-                //TODO this is a gambiarra. needs to be fixed
+                // load user info again
+                // because now we have user's current department in the context,
+                // so user data from department schema will be loaded as well
                 userDetails = userSvc.loadUserByUsername(email)
                 authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
                 authenticationTokenObj.details = WebAuthenticationDetailsSource().buildDetails(req)
@@ -42,7 +45,7 @@ class AuthenticationFilter(
                 SecurityContextHolder.getContext().authentication = authenticationTokenObj
 
             } catch (e: Exception) {
-                logger.error("Erro no filtro de autenticação")
+                logger.error("AuthenticationFilter: Error authenticating token $token")
                 SecurityContextHolder.clearContext()
             }
         }
