@@ -38,10 +38,16 @@ class DocumentService(
             .takeIf { it.tenant == tenantResolver.resolveCurrentTenantIdentifier() }
             ?: throw ResourceNotFoundException()
 
-    fun insert(document: Document, file: MultipartFile): Document {
-        val newDoc = docRepo.save(document.copy(fileName = file.originalFilename!!))
+    fun insert(document: Document, file: MultipartFile? = null): Document {
+        var newDoc = document;
 
-        updateDocumentFile(newDoc, file, null)
+        if (file != null)
+            newDoc = document.copy(fileName = file.originalFilename!!)
+
+        newDoc = docRepo.save(newDoc)
+
+        if (file != null)
+            updateDocumentFile(newDoc, file, null)
 
         return newDoc
     }
@@ -77,6 +83,19 @@ class DocumentService(
     }
 
     fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File?) {
+        // launch a new thread to process file content asynchronously
+        thread {
+            fileUtils.transferFile(file, doc.tenant, doc.id!!)
+            if (currentFile != null)
+                fileUtils.deleteFile(doc.tenant, currentFile.name)
+
+            processFile(doc.copy(fileName = file.originalFilename!!))
+
+            //TODO somehow notify user that the file status has been updated for either success or fail
+        }
+    }
+
+    fun processMultipleFiles(doc: Document, file: MultipartFile, currentFile: File?) {
         // launch a new thread to process file content asynchronously
         thread {
             fileUtils.transferFile(file, doc.tenant, doc.id!!)

@@ -1,6 +1,7 @@
 package br.unirio.gedapp.controller
 
 import br.unirio.gedapp.domain.Document
+import br.unirio.gedapp.domain.dto.GoogleDriveDocumentDTO
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.service.DocumentService
 import org.springframework.beans.factory.annotation.Autowired
@@ -9,6 +10,7 @@ import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDate
+import kotlin.concurrent.thread
 
 @RestController
 @RequestMapping("/documents")
@@ -33,6 +35,41 @@ class DocumentController(
         @RequestPart file: MultipartFile
     ) = ResponseEntity.status(HttpStatus.CREATED).body(
             docSvc.insert(document, file))
+
+    @PostMapping("/import")
+    fun addDocumentList(
+        @RequestParam category: Long,
+        @RequestBody gDocuments : List<GoogleDriveDocumentDTO>
+    ): ResponseEntity<List<Document>> {
+        val documentList = mutableListOf<Document>()
+
+        gDocuments.forEach { doc ->
+            try {
+                documentList.add(
+                    docSvc.insert(
+                        Document(
+                            fileName = doc.name,
+                            title = doc.name,
+                            summary = doc.description,
+                            mediaType = doc.mimeType,
+                            category = category,
+                            date = doc.lastEditedUtc
+                )))
+            } catch (e : Exception) {
+                // log error
+            }
+        }
+
+        thread {
+            docSvc.processMultipleFiles(documentList, gDocuments)
+        }
+
+        return when (documentList.size) {
+            gDocuments.size -> ResponseEntity.ok(documentList)
+            0 -> ResponseEntity.status(HttpStatus.CONFLICT).body(documentList)
+            else -> ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(documentList)
+        }
+    }
 
     @PatchMapping("/{id}", consumes = ["multipart/form-data"])
     fun updateDocument(
