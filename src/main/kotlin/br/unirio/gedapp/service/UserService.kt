@@ -38,10 +38,10 @@ class UserService(
     fun update(user: User, newDataUser: User): User {
         var updatedUser = user
 
-        if (newDataUser.firstName.isNotBlank())
+        if (!newDataUser.firstName.isNullOrBlank())
             updatedUser = updatedUser.copy(firstName = newDataUser.firstName)
 
-        if (newDataUser.surname.isNotBlank())
+        if (!newDataUser.surname.isNullOrBlank())
             updatedUser = updatedUser.copy(surname = newDataUser.surname)
 
         if (newDataUser.email.isNotBlank())

@@ -17,6 +17,7 @@ class FlywayConfig {
     @Bean
     fun flyway(dataSource: DataSource?): Flyway {
         val flyway = Flyway.configure()
+            .loadDefaultConfigurationFiles()
             .locations("db/migration/public")
             .dataSource(dataSource)
             .schemas(TenantIdentifierResolver.DEFAULT_TENANT)

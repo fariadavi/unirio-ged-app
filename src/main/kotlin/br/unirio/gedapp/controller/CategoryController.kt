@@ -19,7 +19,7 @@ class CategoryController(
 
     @GetMapping
     fun getAllCategoriesFlattened(): Iterable<Category> {
-        val allCategories = catRepo.findAll()
+        val allCategories = catSvc.findAll()
         allCategories.forEach { it.fullName = catSvc.getCategoryAncestorsFlattened(it) }
         return allCategories
     }

@@ -7,8 +7,8 @@ CREATE TABLE department (
 
 CREATE TABLE platform_user (
     id                  BIGINT GENERATED ALWAYS AS IDENTITY,
-    first_name  	    VARCHAR(20) NOT NULL,
-    surname			    VARCHAR(20) NOT NULL,
+    first_name  	    VARCHAR(20),
+    surname			    VARCHAR(20),
     email      		    VARCHAR(40) NOT NULL UNIQUE,
     department_id       BIGINT,
     CONSTRAINT fk_department
@@ -37,4 +37,11 @@ CREATE TABLE user_permission (
     CONSTRAINT fk_platform_user
      FOREIGN KEY(platform_user_id)
          REFERENCES platform_user(id)
+);
+
+INSERT INTO platform_user (email) VALUES ('${application_user_email}');
+
+INSERT INTO user_permission (platform_user_id, permissions) VALUES (
+   (SELECT id FROM platform_user WHERE email = '${application_user_email}'),
+    'MANAGE_SYSTEM_PERM,MANAGE_DEPARTMENTS'
 );

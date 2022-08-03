@@ -1,19 +1,37 @@
 package br.unirio.gedapp.service
 
+import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver
+import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver.Companion.DEFAULT_TENANT
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Category
 import br.unirio.gedapp.repository.CategoryRepository
 import org.springframework.stereotype.Service
 
 @Service
-class CategoryService(val catRepo: CategoryRepository) {
+class CategoryService(
+    val catRepo: CategoryRepository,
+    val tenantResolver: TenantIdentifierResolver
+) {
 
-    fun existsById(id: Long): Boolean = catRepo.existsById(id)
+    private fun hasCurrentTenant() = tenantResolver.resolveCurrentTenantIdentifier() !== DEFAULT_TENANT
 
-    fun getById(id: Long): Category =
-        catRepo
+    fun existsById(id: Long): Boolean = hasCurrentTenant() && catRepo.existsById(id)
+
+    fun getById(id: Long): Category {
+        if (!hasCurrentTenant())
+            throw ResourceNotFoundException()
+
+        return catRepo
             .findById(id)
             .orElseThrow { ResourceNotFoundException() }
+    }
+
+    fun findAll(): List<Category> {
+        if (!hasCurrentTenant())
+            return emptyList()
+
+        return catRepo.findAll()
+    }
 
     /**
      * Returns a [MutableMap] representing the complete lineage of the desired category.
