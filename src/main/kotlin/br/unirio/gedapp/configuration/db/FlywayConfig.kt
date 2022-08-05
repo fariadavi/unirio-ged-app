@@ -1,14 +1,13 @@
 package br.unirio.gedapp.configuration.db
 
 import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver
-import br.unirio.gedapp.domain.Department
-import br.unirio.gedapp.repository.DepartmentRepository
+import br.unirio.gedapp.domain.Permission
+import br.unirio.gedapp.domain.converter.PermissionEnumSetTypeDescriptor
 import org.flywaydb.core.Flyway
 
-import org.springframework.boot.CommandLineRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.util.function.Consumer
+import java.util.*
 import javax.sql.DataSource
 
 @Configuration
@@ -17,7 +16,15 @@ class FlywayConfig {
     @Bean
     fun flyway(dataSource: DataSource?): Flyway {
         val flyway = Flyway.configure()
-            .loadDefaultConfigurationFiles()
+            .placeholders(
+                mapOf(
+                    "application_user_email" to
+                            System.getenv("APPLICATION_USER_EMAIL"),
+                    "starting_system_permissions" to
+                            EnumSet.copyOf(Permission.getSystemPermissions())
+                                .joinToString(PermissionEnumSetTypeDescriptor.SEPARATOR)
+                )
+            )
             .locations("db/migration/public")
             .dataSource(dataSource)
             .schemas(TenantIdentifierResolver.DEFAULT_TENANT)
@@ -25,21 +32,4 @@ class FlywayConfig {
         flyway.migrate()
         return flyway
     }
-
-    @Bean
-    fun commandLineRunner(deptRepository: DepartmentRepository, dataSource: DataSource?): CommandLineRunner =
-        CommandLineRunner {
-            deptRepository.findAll()
-                .forEach(
-                    Consumer { dept: Department ->
-                        val tenant = dept.acronym.toLowerCase()
-                        Flyway.configure()
-                            .locations("db/migration/tenants")
-                            .dataSource(dataSource)
-                            .schemas(tenant)
-                            .load()
-                            .migrate()
-                    }
-                )
-        }
 }

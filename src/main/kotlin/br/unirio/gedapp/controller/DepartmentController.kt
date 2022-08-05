@@ -3,6 +3,7 @@ package br.unirio.gedapp.controller
 import br.unirio.gedapp.domain.Department
 import br.unirio.gedapp.repository.DepartmentRepository
 import br.unirio.gedapp.service.DepartmentService
+import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -12,7 +13,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/departments")
 class DepartmentController(
     @Autowired private val deptSvc: DepartmentService,
-    @Autowired private val deptRepo: DepartmentRepository
+    @Autowired private val deptRepo: DepartmentRepository,
+    @Autowired private val userSvc: UserService,
 ) {
 
     @GetMapping("/{id}")
@@ -30,6 +32,10 @@ class DepartmentController(
     @PostMapping
     fun addDepartment(@RequestBody dept: Department): ResponseEntity<Department> {
         val newDept = deptSvc.createNewDepartment(dept)
+
+        val user = userSvc.getCurrentUser()
+        userSvc.addUserToDepartment(user, newDept, user.currentDepartment == null)
+
         return ResponseEntity.status(HttpStatus.CREATED).body(newDept)
     }
 

@@ -20,6 +20,14 @@ spring:
             max-file-size: 20MB
             max-request-size: 20MB
             location: ${FILE.STORAGE.PATH}
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: ${MAIL.USERNAME}
+        password: ${MAIL.PASSWORD}
+        properties.mail.smtp:
+            auth: true
+            starttls.enable: true
 
 security:
     auth:

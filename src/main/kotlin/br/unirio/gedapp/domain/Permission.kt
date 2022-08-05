@@ -1,23 +1,23 @@
 package br.unirio.gedapp.domain
 
-enum class Permission(val level: PermissionLevel) {
-    SEARCH_DOCS         (PermissionLevel.DEFAULT),
-    ADD_DOCS            (PermissionLevel.DEPARTMENT),
-    EDIT_DOCS_OTHERS    (PermissionLevel.DEPARTMENT),
-    DELETE_DOCS_OTHERS  (PermissionLevel.DEPARTMENT),
-    INVITE_USERS        (PermissionLevel.DEPARTMENT),
-    MANAGE_CATEGORIES   (PermissionLevel.DEPARTMENT),
-    MANAGE_DEPT_PERM    (PermissionLevel.DEPARTMENT),
-    MANAGE_DEPARTMENTS  (PermissionLevel.SYSTEM),
-    MANAGE_SYSTEM_PERM  (PermissionLevel.SYSTEM);
+enum class Permission(val level: PermissionLevel, val default: Boolean) {
+    SEARCH_DOCS         (PermissionLevel.DEPARTMENT, true),
+    ADD_DOCS            (PermissionLevel.DEPARTMENT, false),
+    EDIT_DOCS_OTHERS    (PermissionLevel.DEPARTMENT, false),
+    DELETE_DOCS_OTHERS  (PermissionLevel.DEPARTMENT, false),
+    INVITE_USERS        (PermissionLevel.DEPARTMENT, false),
+    MANAGE_CATEGORIES   (PermissionLevel.DEPARTMENT, false),
+    MANAGE_DEPT_PERM    (PermissionLevel.DEPARTMENT, false),
+    MANAGE_DEPARTMENTS  (PermissionLevel.SYSTEM, false),
+    MANAGE_SYSTEM_PERM  (PermissionLevel.SYSTEM, false);
 
     companion object {
-        fun getPermissionsByLevel(level: PermissionLevel) = values().filter { it.level == level }
+        private fun getPermissionsByLevel(level: PermissionLevel) = values().filter { it.level == level }
 
-        fun getDefaultPermissions() = getPermissionsByLevel(PermissionLevel.DEFAULT)
+        fun getDefaultPermissions() = values().filter { it.default }
 
         fun getDepartmentPermissions() = getPermissionsByLevel(PermissionLevel.DEPARTMENT)
 
-        fun getSystemPermissions() =getPermissionsByLevel(PermissionLevel.SYSTEM)
+        fun getSystemPermissions() = getPermissionsByLevel(PermissionLevel.SYSTEM)
     }
 }

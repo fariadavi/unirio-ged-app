@@ -10,7 +10,7 @@ import org.hibernate.type.descriptor.java.AbstractTypeDescriptor
 class PermissionEnumSetTypeDescriptor : AbstractTypeDescriptor<EnumSet<*>>(EnumSet::class.java) {
 
     companion object {
-        private const val SEPARATOR: String = ","
+        const val SEPARATOR: String = ","
     }
 
     override fun toString(set: EnumSet<*>): String = set.joinToString(SEPARATOR)

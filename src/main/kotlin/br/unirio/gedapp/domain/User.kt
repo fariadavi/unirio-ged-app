@@ -3,7 +3,6 @@ package br.unirio.gedapp.domain
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
-import java.util.*
 import javax.persistence.*
 
 @Entity
@@ -14,9 +13,9 @@ data class User(
     val id: Long = -1,
 
     @Column(name = "first_name")
-    val firstName: String = "",
+    val firstName: String? = "",
 
-    val surname: String = "",
+    val surname: String? = "",
 
     val email: String = "",
 

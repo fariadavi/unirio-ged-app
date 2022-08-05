@@ -11,9 +11,11 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.transaction.Transactional
 
 @Service
 class UserService(
+    val emailSvc: EmailService,
     val userRepo: UserRepository,
     val userPermissionRepo: UserPermissionRepository,
     val userPublicPermissionRepo: UserPublicPermissionRepository
@@ -65,10 +67,9 @@ class UserService(
     fun updatePermissions(userId: Long, permissions: EnumSet<Permission>): User {
         var user = getById(userId)
 
-        val defaultPermissionList = permissions.filter { it.level == PermissionLevel.DEFAULT }
         val deptPermissionList = permissions.filter { it.level == PermissionLevel.DEPARTMENT }
-        if (deptPermissionList.isNotEmpty()) {
-            val userPermission = EnumSet.copyOf(deptPermissionList.plus(defaultPermissionList))
+        if (user.currentDepartment != null && deptPermissionList.isNotEmpty()) {
+            val userPermission = EnumSet.copyOf(deptPermissionList)
             if (user.userPermission?.permissions != userPermission) {
                 val permissionsDept = user.userPermission?.copy(permissions = userPermission) ?: UserPermission(user, userPermission)
                 userPermissionRepo.save(permissionsDept)
@@ -114,20 +115,30 @@ class UserService(
             userRepo.save(User(email = email))
         }
 
+    @Transactional
     fun inviteUserToCurrentDepartment(email: String): User {
-        var user = findOrCreateUser(email)
+        val user = findOrCreateUser(email)
+        val currentUser = getCurrentUser()
 
+        val savedUser = addUserToDepartment(user, currentUser.currentDepartment!!)
+
+        updatePermissions(savedUser.id, EnumSet.copyOf(Permission.getDefaultPermissions()))
+
+        emailSvc.sendUserInvitedEmail(email, currentUser.fullName, currentUser.currentDepartment)
+
+        return savedUser
+    }
+
+    fun addUserToDepartment(user: User, department: Department, setNewDeptAsCurrent: Boolean = true): User {
         val userNewDepartments : MutableSet<Department> = user.departments?.toMutableSet() ?: mutableSetOf()
-        getCurrentUser().currentDepartment?.let { userNewDepartments.add(it) }
+        userNewDepartments.add(department)
 
-        user = user.copy(departments = userNewDepartments)
-
-        val userNewPermissions = UserPermission(user = user, permissions = EnumSet.copyOf(Permission.getDefaultPermissions()))
-        userPermissionRepo.save(userNewPermissions)
-
-        user = user.copy(userPermission = userNewPermissions)
-
-        return userRepo.save(user)
+        return userRepo.save(
+            user.copy(
+                departments = userNewDepartments,
+                currentDepartment = (if (setNewDeptAsCurrent) department else user.currentDepartment)
+            )
+        )
     }
 
     fun checkIfUserHasAccessToCurrentDepartment(email: String) =
