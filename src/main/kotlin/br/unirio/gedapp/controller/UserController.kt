@@ -4,7 +4,6 @@ import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.controller.exceptions.UserAlreadyInvitedException
 import br.unirio.gedapp.domain.Permission
-import br.unirio.gedapp.domain.PermissionLevel
 import br.unirio.gedapp.domain.User
 import br.unirio.gedapp.repository.UserRepository
 import br.unirio.gedapp.service.UserService

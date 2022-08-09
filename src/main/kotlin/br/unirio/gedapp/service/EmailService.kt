@@ -1,9 +1,9 @@
-package br.unirio.gedapp.service;
+package br.unirio.gedapp.service
 
 import br.unirio.gedapp.domain.Department
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service
 
 @Service
 class EmailService(val javaMailSender: JavaMailSender) {

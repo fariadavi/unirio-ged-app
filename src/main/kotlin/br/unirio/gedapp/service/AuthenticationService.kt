@@ -3,7 +3,6 @@ package br.unirio.gedapp.service
 import br.unirio.gedapp.configuration.yml.AuthConfig
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.User
-import com.google.api.client.auth.openidconnect.IdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport

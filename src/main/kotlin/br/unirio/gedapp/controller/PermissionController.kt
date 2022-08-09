@@ -1,7 +1,6 @@
 package br.unirio.gedapp.controller
 
 import br.unirio.gedapp.domain.Permission
-import br.unirio.gedapp.domain.PermissionLevel
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
