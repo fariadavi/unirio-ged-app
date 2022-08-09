@@ -1,6 +1,8 @@
 package br.unirio.gedapp.controller
 
 import br.unirio.gedapp.domain.Department
+import br.unirio.gedapp.domain.Permission
+import br.unirio.gedapp.domain.User
 import br.unirio.gedapp.repository.DepartmentRepository
 import br.unirio.gedapp.service.DepartmentService
 import br.unirio.gedapp.service.UserService
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("/departments")
@@ -43,6 +46,18 @@ class DepartmentController(
     fun updateDepartment(@PathVariable id : Long, @RequestBody dept: Department): ResponseEntity<Department> {
         val modifiedDept = deptSvc.update(id, dept)
         return ResponseEntity.ok(modifiedDept)
+    }
+
+    @PatchMapping
+    fun updateDepartments(@RequestBody editedDepartments: List<Department>): ResponseEntity<List<Department>> {
+        val (modifiedDeptList, numErrors) = deptSvc.batchUpdate(editedDepartments)
+
+        val response = when (numErrors) {
+            0 -> ResponseEntity.status(HttpStatus.OK)
+            modifiedDeptList.size -> ResponseEntity.status(HttpStatus.CONFLICT)
+            else -> ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+        }
+        return response.body(modifiedDeptList)
     }
 
     @DeleteMapping("/{id}")

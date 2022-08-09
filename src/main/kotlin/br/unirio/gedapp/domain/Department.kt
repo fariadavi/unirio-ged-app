@@ -9,7 +9,7 @@ data class Department(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = -1,
 
-    val name: String = "",
+    val name: String? = null,
 
-    val acronym: String = ""
+    val acronym: String? = null
 )
