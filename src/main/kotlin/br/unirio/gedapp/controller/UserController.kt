@@ -33,10 +33,10 @@ class UserController(
         return ResponseEntity.ok(allUsers)
     }
 
-    @GetMapping("/department/{id}")
-    fun getAllUsersFromDepartment(@PathVariable id: Long): ResponseEntity<Iterable<User>> {
-        val usersFromDept = userRepo.findByDepartmentsId(id)
-        return ResponseEntity.ok(usersFromDept)
+    @GetMapping("/currentdept")
+    fun getAllUsersFromCurrentDepartment(): ResponseEntity<Iterable<User>> {
+        val usersFromCurrentDept = userSvc.getAllUsersInCurrentDepartment()
+        return ResponseEntity.ok(usersFromCurrentDept)
     }
 
     @PostMapping

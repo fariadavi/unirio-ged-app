@@ -31,7 +31,9 @@ class UserService(
             .findByEmail(email)
             .orElseThrow { ResourceNotFoundException() }
 
-    fun getAllUsers(): List<User> =
+    fun getAllUsers(): List<User> = userRepo.findAll()
+
+    fun getAllUsersInCurrentDepartment(): List<User> =
         userRepo.findAllWithCurrentDepartmentPermission()
 
     fun update(userId: Long, newDataUser: User): User =

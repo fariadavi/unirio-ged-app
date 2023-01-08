@@ -11,8 +11,6 @@ interface UserRepository : JpaRepository<User, Long> {
 
     fun findByEmail(email: String): Optional<User>
 
-    fun findByDepartmentsId(id: Long): List<User>
-
     @Query("SELECT u FROM User u INNER JOIN u.userPermission up")
     fun findAllWithCurrentDepartmentPermission(): List<User>
 }
