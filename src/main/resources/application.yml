@@ -13,7 +13,8 @@ spring:
         rest:
             uris: ${DATABASE.ELASTICSEARCH.PATH}
     jackson:
-        serialization.indent_output: true
+        serialization:
+            indent_output: true
     servlet:
         multipart:
             enabled: true
