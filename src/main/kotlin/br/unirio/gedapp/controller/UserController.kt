@@ -80,7 +80,7 @@ class UserController(
 
     @DeleteMapping("/{id}")
     fun removeUserAccess(@PathVariable id: Long): ResponseEntity<User> {
-        userSvc.removeUserDepartmentPermission(id)
+        userSvc.removeUserFromCurrentDepartment(id)
         return ResponseEntity.noContent().build()
     }
 

@@ -2,13 +2,10 @@ package br.unirio.gedapp.service
 
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Department
-import br.unirio.gedapp.domain.Permission
-import br.unirio.gedapp.domain.User
 import br.unirio.gedapp.repository.DepartmentRepository
 import br.unirio.gedapp.repository.DocumentRepository
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
-import java.util.*
 import javax.transaction.Transactional
 
 @Service
@@ -23,10 +20,12 @@ class DepartmentService(
             .findById(id)
             .orElseThrow { ResourceNotFoundException() }
 
+    fun findAllDepartments() = deptRepo.findAllWithUserCount()
+
     @Transactional
     fun createNewDepartment(dept: Department): Department {
         val savedDept: Department = deptRepo.save(dept)
-        tenantSvc.initDatabase(savedDept.acronym!!.toLowerCase())
+        tenantSvc.initDatabase(savedDept.acronym!!.lowercase())
         return savedDept
     }
 
@@ -43,7 +42,7 @@ class DepartmentService(
 
         val updatedDept = deptRepo.save(existingDept)
 
-        if (currentAcronym!!.toLowerCase() != updatedDept.acronym!!.toLowerCase()) {
+        if (currentAcronym!!.lowercase() != updatedDept.acronym!!.lowercase()) {
             tenantSvc.renameSchema(currentAcronym, updatedDept.acronym)
 
 //            val allDeptDocs = docRepo.findAllByTenant(currentAcronym)

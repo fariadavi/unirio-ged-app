@@ -94,13 +94,6 @@ class UserService(
         return user
     }
 
-    fun removeUserDepartmentPermission(userId: Long) {
-        val userPermission = getById(userId).userPermission
-
-        if (userPermission != null)
-            userPermissionRepo.delete(userPermission)
-    }
-
     override fun loadUserByUsername(email: String): UserDetails = getByEmail(email)
 
     fun getCurrentUser(): User {
@@ -141,6 +134,32 @@ class UserService(
                 currentDepartment = (if (setNewDeptAsCurrent) department else user.currentDepartment)
             )
         )
+    }
+
+    @Transactional
+    fun removeUserFromCurrentDepartment(userId: Long) {
+        val userPermission = getById(userId).userPermission
+        if (userPermission != null) userPermissionRepo.delete(userPermission)
+
+        val currentDepartment = getCurrentUser().currentDepartment
+        if (currentDepartment != null) removeUserFromDepartment(getById(userId), currentDepartment)
+    }
+
+    fun removeUserFromDepartment(user: User, department: Department): User {
+        val departmentSet = user.departments?.toMutableSet()
+
+        if (departmentSet != null && departmentSet.any { it.id == department.id }) {
+            val userNewDepartments = departmentSet.filter { it.id != department.id }.toSet()
+
+            return userRepo.save(
+                user.copy(
+                    departments = userNewDepartments,
+                    currentDepartment = (if (user.currentDepartment?.id == department.id) userNewDepartments.firstOrNull() else user.currentDepartment)
+                )
+            )
+        }
+
+        return user
     }
 
     fun checkIfUserHasAccessToCurrentDepartment(email: String) =

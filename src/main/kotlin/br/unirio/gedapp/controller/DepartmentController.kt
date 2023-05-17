@@ -1,22 +1,18 @@
 package br.unirio.gedapp.controller
 
 import br.unirio.gedapp.domain.Department
-import br.unirio.gedapp.domain.Permission
-import br.unirio.gedapp.domain.User
-import br.unirio.gedapp.repository.DepartmentRepository
+import br.unirio.gedapp.domain.dto.DepartmentDTO
 import br.unirio.gedapp.service.DepartmentService
 import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("/departments")
 class DepartmentController(
     @Autowired private val deptSvc: DepartmentService,
-    @Autowired private val deptRepo: DepartmentRepository,
     @Autowired private val userSvc: UserService,
 ) {
 
@@ -27,8 +23,8 @@ class DepartmentController(
     }
 
     @GetMapping
-    fun getAllDepartments(): ResponseEntity<Iterable<Department>> {
-        val allDepts = deptRepo.findAll()
+    fun getAllDepartments(): ResponseEntity<Iterable<DepartmentDTO>> {
+        val allDepts = deptSvc.findAllDepartments()
         return ResponseEntity.ok(allDepts)
     }
 
