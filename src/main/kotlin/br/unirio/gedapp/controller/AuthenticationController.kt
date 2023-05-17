@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 class AuthenticationController(@Autowired private val authSvc: AuthenticationService) {
 
     @PostMapping("/google/login")
-    fun loginWithGoogle(@RequestBody accessToken : String): ResponseEntity<String> {
+    fun loginWithGoogle(@RequestBody accessToken: String): ResponseEntity<String> {
         val jwt = authSvc.loginWithGoogle(accessToken)
         return ResponseEntity.ok(jwt)
     }

@@ -36,7 +36,6 @@ security:
         header: Authorization
         prefix: Bearer
         secret: ${JWT.SECRET.KEY}
-        expiration: 43200
 
 application:
     storage:

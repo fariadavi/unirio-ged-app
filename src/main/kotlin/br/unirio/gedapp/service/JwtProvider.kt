@@ -8,25 +8,21 @@ import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
 class JwtProvider(@Autowired val jwtConfig: JwtConfig) {
 
-    fun generateToken(authTokenObj: Authentication): String {
+    fun generateToken(authTokenObj: Authentication, issuedAt: Long, expirationTime: Long): String {
 
         val keyBytes = Decoders.BASE64.decode(jwtConfig.secret)
         val key = Keys.hmacShaKeyFor(keyBytes)
 
-        val currentTime = Date()
-
         return Jwts.builder()
             .setSubject(authTokenObj.name)
-            .claim("authorities", authTokenObj.authorities.map { obj: GrantedAuthority -> obj.authority })
-            .setIssuedAt(currentTime)
-            .setExpiration(Date(currentTime.time + (jwtConfig.expiration * 1000)))
+            .setIssuedAt(Date(issuedAt * 1000))
+            .setExpiration(Date(expirationTime * 1000))
             .signWith(key, SignatureAlgorithm.HS512)
             .compact()
     }

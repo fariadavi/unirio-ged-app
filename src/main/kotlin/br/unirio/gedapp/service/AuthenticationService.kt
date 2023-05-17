@@ -26,17 +26,19 @@ class AuthenticationService(
             GsonFactory()
         ).setAudience(listOf(authConfig.clientId)).build()
 
-        val idToken: GoogleIdToken = verifier.verify(accessToken) ?: throw ResourceNotFoundException()
+        val idToken = verifier.verify(accessToken) ?: throw ResourceNotFoundException()
 
-        val email: String = idToken.payload.email
+        val email = idToken.payload.email
 
         val user = userSvc.getByEmail(email)
 
         updateUserName(idToken, user)
 
-        val authenticationTokenObj = UsernamePasswordAuthenticationToken(user as UserDetails, null, user.authorities)
+        val authenticationTokenObj = UsernamePasswordAuthenticationToken(user as UserDetails, null)
+        val issuedAt = idToken.payload.issuedAtTimeSeconds
+        val expirationTime = idToken.payload.expirationTimeSeconds
 
-        return jwtProvider.generateToken(authenticationTokenObj)
+        return jwtProvider.generateToken(authenticationTokenObj, issuedAt, expirationTime)
     }
 
     private fun updateUserName(

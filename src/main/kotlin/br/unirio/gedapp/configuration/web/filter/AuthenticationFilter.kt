@@ -31,7 +31,7 @@ class AuthenticationFilter(
 
                 // load user info from the public schema and set it in the context
                 var userDetails: UserDetails = userSvc.loadUserByUsername(email)
-                var authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+                var authenticationTokenObj = UsernamePasswordAuthenticationToken(userDetails, null)
 
                 SecurityContextHolder.getContext().authentication = authenticationTokenObj
 

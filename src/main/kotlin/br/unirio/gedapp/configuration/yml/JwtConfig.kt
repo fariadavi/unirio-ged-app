@@ -8,6 +8,5 @@ import org.springframework.boot.context.properties.ConstructorBinding
 data class JwtConfig(
     val header: String,
     val prefix: String,
-    val secret: String,
-    val expiration: Int,
+    val secret: String
 )
