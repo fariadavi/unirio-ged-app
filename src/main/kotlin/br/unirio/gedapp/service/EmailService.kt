@@ -12,7 +12,7 @@ class EmailService(val javaMailSender: JavaMailSender) {
         val msg = SimpleMailMessage()
         msg.setTo(recipient)
 
-        msg.setSubject("UNIRIO GED App - You have been added to ${invitedDepartment.name}");
+        msg.setSubject("UNIRIO GED App - You have been added to ${invitedDepartment.name}")
         msg.setText("You've been added to department ${invitedDepartment.acronym} by $invitingUser.\n\n" +
                 "Log into UNIRIO GED App by accessing https://github.com/fariadavi/unirio-ged-app-frontend/ and signing in with your google account.")
 

@@ -39,7 +39,7 @@ class DocumentService(
             ?: throw ResourceNotFoundException()
 
     fun insert(document: Document, file: MultipartFile? = null): Document {
-        var newDoc = document;
+        var newDoc = document
 
         if (file != null)
             newDoc = document.copy(fileName = file.originalFilename!!)

@@ -31,7 +31,7 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
             QueryBuilders.boolQuery()
                 .filter(QueryBuilders.termQuery("tenant", tenant))
 
-        if (!text.isNullOrBlank())
+        if (text.isNotBlank())
             boolQueryBuilder
                 .should(QueryBuilders.matchQuery("content", text))
                 .should(QueryBuilders.matchQuery("title", text))

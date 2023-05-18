@@ -16,4 +16,4 @@ data class GoogleDriveDocumentDTO(
     var serviceId: String,
     var sizeBytes: Long,
     var url: String
-) { }
+)

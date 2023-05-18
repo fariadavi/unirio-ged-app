@@ -56,7 +56,7 @@ class AuthenticationService(
             if (user.surname != surname)
                 newData = newData.copy(surname = surname)
 
-            if (user.currentDepartment == null && user.departments != null && user.departments.isNotEmpty())
+            if (user.currentDepartment == null && !user.departments.isNullOrEmpty())
                 newData = newData.copy(currentDepartment = user.departments.first())
 
             if (user.firstName != firstName || user.surname != surname || user.currentDepartment == null)
