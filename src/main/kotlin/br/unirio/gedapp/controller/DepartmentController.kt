@@ -30,9 +30,9 @@ class DepartmentController(
 
     @PostMapping
     fun addDepartment(@RequestBody dept: Department): ResponseEntity<Department> {
-        val newDept = deptSvc.createNewDepartment(dept)
-
         val user = userSvc.getCurrentUser()
+        val newDept = deptSvc.createNewDepartment(dept, user.id)
+
         userSvc.addUserToDepartment(user, newDept, user.currentDepartment == null)
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newDept)

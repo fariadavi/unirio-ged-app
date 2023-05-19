@@ -17,12 +17,11 @@ class TenantService(
     @Autowired private val tenantRepo: TenantRepository
 ) {
 
-    fun initDatabase(schema: String?): MigrateResult =
+    fun initDatabase(schema: String?, userId: Long): MigrateResult =
         Flyway.configure()
             .placeholders(
                 mapOf(
-                    "application_user_email" to
-                            System.getenv("APPLICATION_USER_EMAIL"),
+                    "user_id" to userId.toString(),
                     "starting_dept_permissions" to
                             EnumSet.copyOf(Permission.getDepartmentPermissions())
                                 .joinToString(PermissionEnumSetTypeDescriptor.SEPARATOR)

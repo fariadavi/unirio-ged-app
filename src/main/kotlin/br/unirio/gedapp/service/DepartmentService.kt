@@ -23,9 +23,9 @@ class DepartmentService(
     fun findAllDepartments() = deptRepo.findAllWithUserCount()
 
     @Transactional
-    fun createNewDepartment(dept: Department): Department {
+    fun createNewDepartment(dept: Department, userId: Long): Department {
         val savedDept: Department = deptRepo.save(dept)
-        tenantSvc.initDatabase(savedDept.acronym!!.lowercase())
+        tenantSvc.initDatabase(savedDept.acronym!!.lowercase(), userId)
         return savedDept
     }
 

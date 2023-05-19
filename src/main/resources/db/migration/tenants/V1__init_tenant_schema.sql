@@ -19,6 +19,6 @@ CREATE TABLE user_permission (
 );
 
 INSERT INTO user_permission (platform_user_id, permissions) VALUES (
-   (SELECT id FROM platform_user WHERE email = '${application_user_email}'),
+   '${user_id}',
    '${starting_dept_permissions}'
 );
