@@ -10,7 +10,6 @@ import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDate
-import kotlin.concurrent.thread
 
 @RestController
 @RequestMapping("/documents")
@@ -38,37 +37,11 @@ class DocumentController(
 
     @PostMapping("/import")
     fun addDocumentList(
-        @RequestParam category: Long,
         @RequestBody gDocuments : List<GoogleDriveDocumentDTO>
-    ): ResponseEntity<List<Document>> {
-        val documentList = mutableListOf<Document>()
+    ): ResponseEntity<String> {
+        docSvc.importGoogleDocs(gDocuments)
 
-        gDocuments.forEach { doc ->
-            try {
-                documentList.add(
-                    docSvc.insert(
-                        Document(
-                            fileName = doc.name,
-                            title = doc.name,
-                            summary = doc.description,
-                            mediaType = doc.mimeType,
-                            category = category,
-                            date = doc.lastEditedUtc
-                )))
-            } catch (e : Exception) {
-                // log error
-            }
-        }
-
-        thread {
-            docSvc.processMultipleFiles(documentList, gDocuments)
-        }
-
-        return when (documentList.size) {
-            gDocuments.size -> ResponseEntity.ok(documentList)
-            0 -> ResponseEntity.status(HttpStatus.CONFLICT).body(documentList)
-            else -> ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(documentList)
-        }
+        return ResponseEntity.ok("Documents will be processed")
     }
 
     @PatchMapping("/{id}", consumes = ["multipart/form-data"])

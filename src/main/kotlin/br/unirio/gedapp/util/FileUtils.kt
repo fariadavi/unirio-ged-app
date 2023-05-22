@@ -8,23 +8,21 @@ import java.nio.file.Path
 
 class FileUtils(private val storageConfig: StorageConfig) {
 
-    fun getFilePath(tenant: String, docId: String, fileName: String): Path =
-        Path.of(storageConfig.path, tenant, "${docId}_${fileName}")
+    fun getFilePath(tenant: String, docId: String, fileName: String): Path {
+        if (Files.notExists(Path.of(storageConfig.path, tenant)))
+            Files.createDirectory(Path.of(storageConfig.path, tenant))
+
+        return Path.of(storageConfig.path, tenant, "${docId}_${fileName}")
+    }
 
     fun getFile(tenant: String, docId: String, fileName: String): File =
-        Path.of(storageConfig.path, tenant, "${docId}_${fileName}").toFile()
+        getFilePath(tenant, docId, fileName).toFile()
 
     fun transferFile(file: MultipartFile, tenant: String, docId: String) =
         transferFile(file, tenant, docId, null)
 
-    fun transferFile(file: MultipartFile, tenant: String, docId: String, fileName: String?) {
-        if (Files.notExists(Path.of(storageConfig.path, tenant)))
-            Files.createDirectory(Path.of(storageConfig.path, tenant))
-
-        file.transferTo(
-            Path.of(storageConfig.path, tenant, "${docId}_${fileName ?: file.originalFilename}")
-        )
-    }
+    fun transferFile(file: MultipartFile, tenant: String, docId: String, fileName: String?) =
+        file.transferTo(getFilePath(tenant, docId, fileName ?: file.originalFilename!!))
 
     fun deleteFile(tenant: String, fileName: String) =
         Files.deleteIfExists(Path.of(storageConfig.path, tenant, fileName))

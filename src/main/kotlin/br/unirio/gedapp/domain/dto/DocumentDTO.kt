@@ -11,7 +11,7 @@ data class DocumentDTO(
     var title: String,
     var summary: String,
     var mediaType: String,
-    var date: LocalDate,
+    var date: LocalDate? = null,
     var status: DocumentStatus,
     var categoryId: Long,
     var registeredById: Long,
@@ -19,18 +19,18 @@ data class DocumentDTO(
     var fullCategoryHierarchy: String? = null,
     var registeredBy: String? = null
 ) {
+    val formattedDate: String?
+        get() = date?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+
     constructor(document: Document) : this(
         document.id!!,
         document.fileName,
         document.title,
         document.summary ?: "",
         document.mediaType?: "",
-        document.date!!,
+        document.date,
         document.status,
         document.category,
         document.registeredBy
     )
-
-    val formattedDate: String
-        get() = date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 }

@@ -6,17 +6,26 @@ import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.DocumentStatus
 import br.unirio.gedapp.domain.dto.DocumentDTO
+import br.unirio.gedapp.domain.dto.GoogleDriveDocumentDTO
 import br.unirio.gedapp.domain.dto.SearchDocumentsResultDTO
 import br.unirio.gedapp.repository.DocumentRepository
 import br.unirio.gedapp.util.FileUtils
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
+import com.google.api.client.json.gson.GsonFactory
+import com.google.api.services.drive.Drive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.apache.tika.Tika
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.file.Path
 import java.time.LocalDate
-import kotlin.concurrent.thread
+import java.time.LocalDateTime
 
 @Service
 class DocumentService(
@@ -82,9 +91,9 @@ class DocumentService(
         return docRepo.save(existingDoc)
     }
 
-    fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File?) {
-        // launch a new thread to process file content asynchronously
-        thread {
+    fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File?) = runBlocking {
+        // process file content asynchronously
+        launch {
             fileUtils.transferFile(file, doc.tenant, doc.id!!)
             if (currentFile != null)
                 fileUtils.deleteFile(doc.tenant, currentFile.name)
@@ -95,14 +104,37 @@ class DocumentService(
         }
     }
 
-    fun processMultipleFiles(doc: Document, file: MultipartFile, currentFile: File?) {
-        // launch a new thread to process file content asynchronously
-        thread {
-            fileUtils.transferFile(file, doc.tenant, doc.id!!)
-            if (currentFile != null)
-                fileUtils.deleteFile(doc.tenant, currentFile.name)
+    fun importGoogleFiles(docMap: Map<Document, GoogleDriveDocumentDTO>) {
+        val googleCredential = GoogleCredential()
+        googleCredential.accessToken = docMap.values.first().token
 
-            processFile(doc.copy(fileName = file.originalFilename!!))
+        val service: Drive = Drive.Builder(
+            GoogleNetHttpTransport.newTrustedTransport(),
+            GsonFactory.getDefaultInstance(),
+            googleCredential
+        ).build()
+
+        docMap.forEach { doc ->
+            val document = doc.key
+            val driveDoc = doc.value
+
+            try {
+                val filepath = fileUtils.getFilePath(document.tenant, document.id!!, document.fileName)
+                val outputStream = FileOutputStream(filepath.toString())
+
+                val driveFiles = service.files()
+                when (driveDoc.type) {
+                    "file" -> driveFiles.get(driveDoc.id).executeMediaAndDownloadTo(outputStream)
+                    "document" -> driveFiles.export(driveDoc.id, "application/pdf").executeMediaAndDownloadTo(outputStream)
+                    else -> return
+                }
+            } catch (e: GoogleJsonResponseException) {
+                System.err.println("Unable to download file: " + e.details)
+                fileUtils.deleteFile(document.tenant, document.id!!, document.fileName)
+                throw e
+            }
+
+            processFile(document)
 
             //TODO somehow notify user that the file status has been updated for either success or fail
         }
@@ -114,24 +146,25 @@ class DocumentService(
 
         val (docContent, mediaType, extractionStatus) = extractContents(filepath)
         docCopy = docCopy.copy(content = docContent, mediaType = mediaType, status = extractionStatus)
-        
-        if (extractionStatus !== DocumentStatus.SUCCESS)
+
+        if (extractionStatus === DocumentStatus.FAILED)
             docCopy = doc.copy(content = "", mediaType = null)
-        
+
         docRepo.save(docCopy)
     }
 
     private fun extractContents(filepath: Path): Triple<String, String, DocumentStatus> {
         var docContent = ""
         var mediaType = ""
-        var extractionStatus = DocumentStatus.SUCCESS
+        var extractionStatus = DocumentStatus.PROCESSED
 
         try {
             docContent = Tika().parseToString(filepath)
             mediaType = Tika().detect(filepath)
+            if (docContent.isBlank()) extractionStatus = DocumentStatus.EMPTY_CONTENT
         } catch (e: Exception) {
             extractionStatus = DocumentStatus.FAILED
-            e.printStackTrace()
+            e.printStackTrace() // TODO log properly this error
         }
 
         return Triple(docContent, mediaType, extractionStatus)
@@ -144,13 +177,15 @@ class DocumentService(
         fileUtils.deleteFile(existingDoc.tenant, id, existingDoc.fileName)
     }
 
-    fun queryDocuments(queryString: String,
-                       page: Int,
-                       pageSize: Int,
-                       minDate: LocalDate?,
-                       maxDate: LocalDate?,
-                       categoryId: Long?,
-                       onlyMyDocs: Boolean): SearchDocumentsResultDTO {
+    fun queryDocuments(
+        queryString: String,
+        page: Int,
+        pageSize: Int,
+        minDate: LocalDate?,
+        maxDate: LocalDate?,
+        categoryId: Long?,
+        onlyMyDocs: Boolean
+    ): SearchDocumentsResultDTO {
         if (categoryId != null && !catSvc.existsById(categoryId))
             throw ResourceNotFoundException()
 
@@ -181,4 +216,47 @@ class DocumentService(
 
         return documentDTO
     }
+
+    fun importGoogleDocs(gDocuments: List<GoogleDriveDocumentDTO>) = runBlocking {
+        val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
+        val userId = userSvc.getCurrentUser().id
+
+        launch {
+            val docsMap = gDocuments
+                .associateBy { saveGoogleDoc(it, userId, currentTenant) }
+                .mapNotNull { (k, v) -> k?.let { it to v } }
+                .toMap()
+
+            val users = gDocuments.map { it.email }.toSet()
+            for (user in users)
+                importGoogleFiles(docsMap.filter { it.value.email == user })
+        }
+
+        println("teste de async")
+    }
+
+    private fun saveGoogleDoc(
+        googleDoc: GoogleDriveDocumentDTO,
+        userId: Long,
+        tenant: String
+    ): Document? =
+        try {
+            insert(
+                Document(
+                    tenant = tenant,
+                    fileName = googleDoc.name,
+                    title = googleDoc.name,
+                    summary = googleDoc.description,
+                    mediaType = googleDoc.mimeType,
+                    category = googleDoc.category,
+                    date = LocalDate.parse(googleDoc.date),
+                    registeredAt = LocalDateTime.now(),
+                    registeredBy = userId
+                )
+            )
+        } catch (e: Exception) {
+            System.err.println("Unable to save document")
+            e.printStackTrace()
+            null
+        }
 }

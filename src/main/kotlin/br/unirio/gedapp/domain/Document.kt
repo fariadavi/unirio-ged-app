@@ -24,11 +24,11 @@ data class Document(
     @Field(type = FieldType.Text, analyzer = "brazilian")
     val title: String = "",
 
-    @Field(type = FieldType.Text, analyzer = "brazilian")
-    val summary: String? = null,
-
     @Field(type = FieldType.Date, format = DateFormat.date, pattern = "yyyy-MM-dd")
     val date: LocalDate? = null,
+
+    @Field(type = FieldType.Text, analyzer = "brazilian")
+    val summary: String? = null,
 
     @Field(type = FieldType.Keyword)
     val mediaType: String? = null,
