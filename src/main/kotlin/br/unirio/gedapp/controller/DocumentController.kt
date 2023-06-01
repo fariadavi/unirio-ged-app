@@ -36,7 +36,7 @@ class DocumentController(
             docSvc.insert(document, file))
 
     @PostMapping("/import")
-    fun addDocumentList(
+    suspend fun addDocumentList(
         @RequestBody gDocuments : List<GoogleDriveDocumentDTO>
     ): ResponseEntity<String> {
         docSvc.importGoogleDocs(gDocuments)

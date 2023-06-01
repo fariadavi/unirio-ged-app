@@ -15,8 +15,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.apache.tika.Tika
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -26,6 +25,7 @@ import java.io.FileOutputStream
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.coroutines.EmptyCoroutineContext
 
 @Service
 class DocumentService(
@@ -99,42 +99,6 @@ class DocumentService(
                 fileUtils.deleteFile(doc.tenant, currentFile.name)
 
             processFile(doc.copy(fileName = file.originalFilename!!))
-
-            //TODO somehow notify user that the file status has been updated for either success or fail
-        }
-    }
-
-    fun importGoogleFiles(docMap: Map<Document, GoogleDriveDocumentDTO>) {
-        val googleCredential = GoogleCredential()
-        googleCredential.accessToken = docMap.values.first().token
-
-        val service: Drive = Drive.Builder(
-            GoogleNetHttpTransport.newTrustedTransport(),
-            GsonFactory.getDefaultInstance(),
-            googleCredential
-        ).build()
-
-        docMap.forEach { doc ->
-            val document = doc.key
-            val driveDoc = doc.value
-
-            try {
-                val filepath = fileUtils.getFilePath(document.tenant, document.id!!, document.fileName)
-                val outputStream = FileOutputStream(filepath.toString())
-
-                val driveFiles = service.files()
-                when (driveDoc.type) {
-                    "file" -> driveFiles.get(driveDoc.id).executeMediaAndDownloadTo(outputStream)
-                    "document" -> driveFiles.export(driveDoc.id, "application/pdf").executeMediaAndDownloadTo(outputStream)
-                    else -> return
-                }
-            } catch (e: GoogleJsonResponseException) {
-                System.err.println("Unable to download file: " + e.details)
-                fileUtils.deleteFile(document.tenant, document.id!!, document.fileName)
-                throw e
-            }
-
-            processFile(document)
 
             //TODO somehow notify user that the file status has been updated for either success or fail
         }
@@ -217,35 +181,36 @@ class DocumentService(
         return documentDTO
     }
 
-    fun importGoogleDocs(gDocuments: List<GoogleDriveDocumentDTO>) = runBlocking {
+    suspend fun importGoogleDocs(gDocuments: List<GoogleDriveDocumentDTO>) {
         val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
         val userId = userSvc.getCurrentUser().id
 
-        launch {
-            val docsMap = gDocuments
-                .associateBy { saveGoogleDoc(it, userId, currentTenant) }
-                .mapNotNull { (k, v) -> k?.let { it to v } }
-                .toMap()
+        CoroutineScope(EmptyCoroutineContext).launch {
+            val docsMap = coroutineScope {
+                return@coroutineScope gDocuments
+                    .associateBy { async { saveGoogleDoc(it, userId, currentTenant) }.await() }
+                    .mapNotNull { (k, v) -> k?.let { it to v } }
+                    .toMap()
+            }
 
-            val users = gDocuments.map { it.email }.toSet()
+            val users = docsMap.values.map { it.email }.toSet()
             for (user in users)
-                importGoogleFiles(docsMap.filter { it.value.email == user })
+                launch { importGoogleFiles(docsMap.filter { it.value.email == user }) }
         }
-
-        println("teste de async")
     }
 
-    private fun saveGoogleDoc(
+    private suspend fun saveGoogleDoc(
         googleDoc: GoogleDriveDocumentDTO,
         userId: Long,
         tenant: String
-    ): Document? =
-        try {
+    ): Document? {
+        println("saving " + googleDoc.name + " | " + googleDoc.id) // TODO replace with log
+        return try {
             insert(
                 Document(
                     tenant = tenant,
-                    fileName = googleDoc.name,
-                    title = googleDoc.name,
+                    fileName = googleDoc.name.trim(),
+                    title = googleDoc.name.trim(),
                     summary = googleDoc.description,
                     mediaType = googleDoc.mimeType,
                     category = googleDoc.category,
@@ -255,8 +220,64 @@ class DocumentService(
                 )
             )
         } catch (e: Exception) {
-            System.err.println("Unable to save document")
+            System.err.println("Unable to save document " + googleDoc.name + " | " + googleDoc.id) // TODO replace with log
             e.printStackTrace()
             null
         }
+    }
+
+    private suspend fun importGoogleFiles(docMap: Map<Document, GoogleDriveDocumentDTO>) = coroutineScope {
+        println("importing docs from Google Drive of " + docMap.values.first().email) // TODO replace with log
+
+        val googleCredential = GoogleCredential()
+        googleCredential.accessToken = docMap.values.first().token
+
+        val service: Drive = Drive.Builder(
+            GoogleNetHttpTransport.newTrustedTransport(),
+            GsonFactory.getDefaultInstance(),
+            googleCredential
+        ).build()
+
+        for (doc in docMap) {
+            launch {
+                val document = doc.key
+                val driveDoc = doc.value
+
+                val outputStream = try {
+                    val filepath = fileUtils.getFilePath(document.tenant, document.id!!, document.fileName)
+                    FileOutputStream(filepath.toString())
+                } catch (e: Exception) {
+                    System.err.println("Error creating file named " + document.fileName) // TODO replace with log
+                    e.printStackTrace()
+                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
+                    return@launch
+                }
+
+                try {
+                    val driveFiles = service.files()
+                    when (driveDoc.type) {
+                        "file" -> driveFiles
+                            .get(driveDoc.id)
+                            .executeMediaAndDownloadTo(outputStream)
+                        "document" -> driveFiles
+                            .export(driveDoc.id, "application/pdf")
+                            .executeMediaAndDownloadTo(outputStream)
+                        else -> return@launch
+                    }
+                } catch (e: GoogleJsonResponseException) {
+                    System.err.println("Unable to download file from Google Drive: " + e.details) // TODO replace with log
+                    fileUtils.deleteFile(document.tenant, document.id, document.fileName)
+                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
+                    return@launch
+                } catch (e: Exception) {
+                    System.err.println("Error importing file " + document.fileName) // TODO replace with log
+                    fileUtils.deleteFile(document.tenant, document.id, document.fileName)
+                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
+                    return@launch
+                }
+
+                processFile(document)
+            }
+        }
+    }
 }
