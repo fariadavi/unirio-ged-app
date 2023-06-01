@@ -24,7 +24,7 @@ data class Document(
     @Field(type = FieldType.Text, analyzer = "brazilian")
     val title: String = "",
 
-    @Field(type = FieldType.Date, format = DateFormat.date, pattern = "yyyy-MM-dd")
+    @Field(type = FieldType.Date, format = [DateFormat.date], pattern = ["yyyy-MM-dd"])
     val date: LocalDate? = null,
 
     @Field(type = FieldType.Text, analyzer = "brazilian")
@@ -47,6 +47,6 @@ data class Document(
     @Field(type = FieldType.Long, name = "platform_user_id")
     val registeredBy: Long = -1L,
 
-    @Field(type = FieldType.Date, format = DateFormat.date_time)
+    @Field(type = FieldType.Date, format = [DateFormat.date_hour_minute_second_millis])
     val registeredAt: LocalDateTime? = null
 )
