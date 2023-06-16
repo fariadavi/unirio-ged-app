@@ -1,8 +1,10 @@
 package br.unirio.gedapp.service
 
 import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver
+import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver.Companion.DEFAULT_TENANT
 import br.unirio.gedapp.configuration.yml.StorageConfig
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
+import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.DocumentStatus
 import br.unirio.gedapp.domain.dto.DocumentDTO
@@ -48,6 +50,9 @@ class DocumentService(
             ?: throw ResourceNotFoundException()
 
     fun insert(document: Document, file: MultipartFile? = null): Document {
+        val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
+        if (currentTenant === DEFAULT_TENANT) throw UnauthorizedException()
+
         var newDoc = document
 
         if (file != null)
@@ -62,6 +67,9 @@ class DocumentService(
     }
 
     fun update(docId: String, newDataDoc: Document, file: MultipartFile?): Document {
+        val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
+        if (currentTenant === DEFAULT_TENANT) throw UnauthorizedException()
+
         var existingDoc = getById(docId)
 
         if (newDataDoc.title.isNotBlank())
@@ -150,13 +158,16 @@ class DocumentService(
         categoryId: Long?,
         onlyMyDocs: Boolean
     ): SearchDocumentsResultDTO {
+        val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
+        if (currentTenant === DEFAULT_TENANT) throw UnauthorizedException()
+
         if (categoryId != null && !catSvc.existsById(categoryId))
             throw ResourceNotFoundException()
 
         val userId = if (onlyMyDocs) userSvc.getCurrentUser().id else null
 
         val (totalHits, docs) = docRepo.queryDocuments(
-            tenantResolver.resolveCurrentTenantIdentifier(),
+            currentTenant,
             queryString,
             page,
             pageSize,
@@ -183,6 +194,7 @@ class DocumentService(
 
     suspend fun importGoogleDocs(gDocuments: List<GoogleDriveDocumentDTO>) {
         val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
+        if (currentTenant === DEFAULT_TENANT) throw UnauthorizedException()
         val userId = userSvc.getCurrentUser().id
 
         CoroutineScope(EmptyCoroutineContext).launch {
@@ -206,19 +218,17 @@ class DocumentService(
     ): Document? {
         println("saving " + googleDoc.name + " | " + googleDoc.id) // TODO replace with log
         return try {
-            insert(
-                Document(
-                    tenant = tenant,
-                    fileName = googleDoc.name.trim(),
-                    title = googleDoc.name.trim(),
-                    summary = googleDoc.description,
-                    mediaType = googleDoc.mimeType,
-                    category = googleDoc.category,
-                    date = LocalDate.parse(googleDoc.date),
-                    registeredAt = LocalDateTime.now(),
-                    registeredBy = userId
-                )
-            )
+            Document(
+                tenant = tenant,
+                fileName = googleDoc.name.trim(),
+                title = googleDoc.name.trim(),
+                summary = googleDoc.description,
+                mediaType = googleDoc.mimeType,
+                category = googleDoc.category,
+                date = LocalDate.parse(googleDoc.date),
+                registeredAt = LocalDateTime.now(),
+                registeredBy = userId
+            ).let { insert(it) }
         } catch (e: Exception) {
             System.err.println("Unable to save document " + googleDoc.name + " | " + googleDoc.id) // TODO replace with log
             e.printStackTrace()
@@ -259,9 +269,11 @@ class DocumentService(
                         "file" -> driveFiles
                             .get(driveDoc.id)
                             .executeMediaAndDownloadTo(outputStream)
+
                         "document" -> driveFiles
                             .export(driveDoc.id, "application/pdf")
                             .executeMediaAndDownloadTo(outputStream)
+
                         else -> return@launch
                     }
                 } catch (e: GoogleJsonResponseException) {
