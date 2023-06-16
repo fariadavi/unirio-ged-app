@@ -88,7 +88,7 @@ class DocumentService(
             val existingDocFile = getFile(existingDoc)
 
             if (!existingDocFile.readBytes().contentEquals(file.bytes)) {
-                existingDoc = existingDoc.copy(status = DocumentStatus.NOT_PROCESSED, content = "", mediaType = null)
+                existingDoc = existingDoc.copy(status = DocumentStatus.PENDING.ordinal, content = "", mediaType = null)
 
                 updateDocumentFile(existingDoc, file, existingDocFile)
             }
@@ -114,10 +114,10 @@ class DocumentService(
 
     private fun processFile(doc: Document) {
         val filepath = fileUtils.getFilePath(doc.tenant, doc.id!!, doc.fileName)
-        var docCopy = docRepo.save(doc.copy(status = DocumentStatus.PROCESSING))
+        var docCopy = docRepo.save(doc.copy(status = DocumentStatus.PROCESSING.ordinal))
 
         val (docContent, mediaType, extractionStatus) = extractContents(filepath)
-        docCopy = docCopy.copy(content = docContent, mediaType = mediaType, status = extractionStatus)
+        docCopy = docCopy.copy(content = docContent, mediaType = mediaType, status = extractionStatus.ordinal)
 
         if (extractionStatus === DocumentStatus.FAILED)
             docCopy = doc.copy(content = "", mediaType = null)

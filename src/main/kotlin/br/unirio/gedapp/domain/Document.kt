@@ -36,8 +36,8 @@ data class Document(
     @Field(type = FieldType.Text, analyzer = "brazilian")
     val content: String = "",
 
-    @Field(type = FieldType.Keyword)
-    val status: DocumentStatus = DocumentStatus.NOT_PROCESSED,
+    @Field(type = FieldType.Integer)
+    val status: Int = DocumentStatus.PENDING.ordinal,
 
     @JsonAlias("category_id")
     @Field(type = FieldType.Long, name = "category_id")

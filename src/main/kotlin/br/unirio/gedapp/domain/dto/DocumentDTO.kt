@@ -29,7 +29,7 @@ data class DocumentDTO(
         document.summary ?: "",
         document.mediaType?: "",
         document.date,
-        document.status,
+        DocumentStatus.values()[document.status],
         document.category,
         document.registeredBy
     )

@@ -59,6 +59,7 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
 
         val startingIndex = (page - 1) * pageSize
         val searchSourceBuilder = SearchSourceBuilder().query(boolQueryBuilder).from(startingIndex).size(pageSize)
+        if (text.isBlank()) searchSourceBuilder.sort("status")
         val searchRequest = SearchRequest().source(searchSourceBuilder)
 
         val client = RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
