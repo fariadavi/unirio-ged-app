@@ -8,6 +8,8 @@ import org.elasticsearch.client.RequestOptions
 import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -67,5 +69,38 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
         client.close()
 
         return Pair(searchResponse.hits.totalHits?.value ?: -1, docList)
+    }
+
+    override fun getMapOfCategoriesWithDocCount(tenant: String): Map<Long, Long> {
+        val boolQueryBuilder =
+            QueryBuilders.boolQuery()
+                .filter(QueryBuilders.termQuery("tenant", tenant))
+
+        val searchSourceBuilder = SearchSourceBuilder().query(boolQueryBuilder).aggregation(AggregationBuilders.terms("group_by_category").field("category_id")).size(0)
+        val searchRequest = SearchRequest().source(searchSourceBuilder)
+
+        val client = RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
+        val searchResponse = client.search(searchRequest, RequestOptions.DEFAULT)
+
+        client.close()
+
+        return searchResponse.aggregations.get<Terms>("group_by_category").buckets.associate { it.key as Long to it.docCount }
+    }
+
+    override fun getDocCountByCategory(tenant: String, categoryId: Long) : Long {
+        val boolQueryBuilder =
+            QueryBuilders.boolQuery()
+                .filter(QueryBuilders.termQuery("tenant", tenant))
+                .filter(QueryBuilders.termQuery("category_id", categoryId))
+
+        val searchSourceBuilder = SearchSourceBuilder().query(boolQueryBuilder).size(0)
+        val searchRequest = SearchRequest().source(searchSourceBuilder)
+
+        val client = RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
+        val searchResponse = client.search(searchRequest, RequestOptions.DEFAULT)
+
+        client.close()
+
+        return searchResponse.hits.totalHits?.value ?: 0
     }
 }

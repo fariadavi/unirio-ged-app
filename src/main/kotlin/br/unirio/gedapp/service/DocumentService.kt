@@ -180,6 +180,16 @@ class DocumentService(
         return SearchDocumentsResultDTO(page, pageSize, totalHits, docs.map { createDTO(it) })
     }
 
+    fun getMapOfCategoriesWithDocCount() =
+        tenantResolver.resolveCurrentTenantIdentifier()
+            .takeIf { it !== DEFAULT_TENANT }
+            ?.let { docRepo.getMapOfCategoriesWithDocCount(it) } ?: emptyMap()
+
+    fun getDocCountByCategory(categoryId: Long) =
+        tenantResolver.resolveCurrentTenantIdentifier()
+            .takeIf { it !== DEFAULT_TENANT }
+            ?.let { docRepo.getDocCountByCategory(it, categoryId) } ?: 0
+
     fun createDTO(document: Document): DocumentDTO {
         val documentDTO = DocumentDTO(document)
 

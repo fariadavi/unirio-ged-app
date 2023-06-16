@@ -17,4 +17,8 @@ interface DocumentCustomRepository {
         minDate: LocalDate?,
         maxDate: LocalDate?
     ): Pair<Long, Iterable<Document>>
+
+    fun getMapOfCategoriesWithDocCount(tenant: String) : Map<Long, Long>
+
+    fun getDocCountByCategory(tenant: String, categoryId: Long) : Long
 }
