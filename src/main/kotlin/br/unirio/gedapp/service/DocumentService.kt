@@ -193,11 +193,23 @@ class DocumentService(
     fun createDTO(document: Document): DocumentDTO {
         val documentDTO = DocumentDTO(document)
 
-        val category = catSvc.getById(document.category)
-        documentDTO.category = category.name
-        documentDTO.fullCategoryHierarchy = catSvc.getCategoryAncestorsFlattened(category)
+        runCatching {
+            catSvc.getById(document.category)
+        }.onSuccess {
+            documentDTO.category = it.name
+            documentDTO.fullCategoryHierarchy = catSvc.getCategoryAncestorsFlattened(it)
+        }.onFailure {
+            documentDTO.category = "?"
+            documentDTO.fullCategoryHierarchy = "?"
+        }
 
-        documentDTO.registeredBy = userSvc.getById(document.registeredBy).fullName
+        runCatching {
+            userSvc.getById(document.registeredBy)
+        }.onSuccess {
+            documentDTO.registeredBy = it.fullName
+        }.onFailure {
+            documentDTO.registeredBy = "?"
+        }
 
         return documentDTO
     }
