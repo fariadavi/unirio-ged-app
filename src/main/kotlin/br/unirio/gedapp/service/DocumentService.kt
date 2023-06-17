@@ -99,9 +99,8 @@ class DocumentService(
         return docRepo.save(existingDoc)
     }
 
-    fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File?) = runBlocking {
-        // process file content asynchronously
-        launch {
+    fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File?) =
+        CoroutineScope(EmptyCoroutineContext).launch { // process file content asynchronously
             fileUtils.transferFile(file, doc.tenant, doc.id!!)
             if (currentFile != null)
                 fileUtils.deleteFile(doc.tenant, currentFile.name)
@@ -110,7 +109,6 @@ class DocumentService(
 
             //TODO somehow notify user that the file status has been updated for either success or fail
         }
-    }
 
     private fun processFile(doc: Document) {
         val filepath = fileUtils.getFilePath(doc.tenant, doc.id!!, doc.fileName)
