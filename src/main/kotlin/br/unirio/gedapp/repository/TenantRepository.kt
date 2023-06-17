@@ -10,15 +10,13 @@ class TenantRepository {
     @PersistenceContext
     private lateinit var entityManager: EntityManager
 
-    fun renameSchema(oldSchemaName: String, newSchemaName: String) {
+    fun renameSchema(oldSchemaName: String, newSchemaName: String) =
         entityManager
-            .createNativeQuery("ALTER SCHEMA $oldSchemaName RENAME TO $newSchemaName")
+            .createNativeQuery("ALTER SCHEMA \"$oldSchemaName\" RENAME TO \"$newSchemaName\"")
             .executeUpdate()
-    }
 
-    fun dropSchema(schemaName: String) {
+    fun dropSchema(schemaName: String) =
         entityManager
-            .createNativeQuery("DROP SCHEMA $schemaName CASCADE")
+            .createNativeQuery("DROP SCHEMA \"$schemaName\" CASCADE")
             .executeUpdate()
-    }
 }
