@@ -29,4 +29,10 @@ class FileUtils(private val storageConfig: StorageConfig) {
 
     fun deleteFile(tenant: String, docId: String, fileName: String) =
         Files.deleteIfExists(Path.of(storageConfig.path, tenant, "${docId}_${fileName}"))
+
+    fun renameFolder(oldName: String, newName: String) =
+        Files.move(
+            Path.of(storageConfig.path, oldName),
+            Path.of(storageConfig.path, newName)
+        )
 }

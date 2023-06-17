@@ -17,7 +17,10 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.apache.tika.Tika
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -50,9 +53,6 @@ class DocumentService(
             ?: throw ResourceNotFoundException()
 
     fun insert(document: Document, file: MultipartFile? = null): Document {
-        val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
-        if (currentTenant === DEFAULT_TENANT) throw UnauthorizedException()
-
         var newDoc = document
 
         if (file != null)
@@ -67,9 +67,6 @@ class DocumentService(
     }
 
     fun update(docId: String, newDataDoc: Document, file: MultipartFile?): Document {
-        val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
-        if (currentTenant === DEFAULT_TENANT) throw UnauthorizedException()
-
         var existingDoc = getById(docId)
 
         if (newDataDoc.title.isNotBlank())
@@ -188,6 +185,11 @@ class DocumentService(
             .takeIf { it !== DEFAULT_TENANT }
             ?.let { docRepo.getDocCountByCategory(it, categoryId) } ?: 0
 
+    fun getDocCountByTenant(tenant: String) = docRepo.countByTenant(tenant)
+
+    fun updateDocsTenantAcronym(tenant: String, newAcronym: String) =
+        docRepo.updateDocsTenantAcronym(tenant, newAcronym)
+
     fun createDTO(document: Document): DocumentDTO {
         val documentDTO = DocumentDTO(document)
 
@@ -228,6 +230,8 @@ class DocumentService(
             val users = docsMap.values.map { it.email }.toSet()
             for (user in users)
                 launch { importGoogleFiles(docsMap.filter { it.value.email == user }) }
+
+            //TODO somehow notify user that the file status has been updated for either success or fail
         }
     }
 

@@ -4,10 +4,14 @@ import br.unirio.gedapp.domain.Document
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.http.HttpHost
 import org.elasticsearch.action.search.SearchRequest
+import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.RequestOptions
 import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.reindex.BulkByScrollResponse
+import org.elasticsearch.index.reindex.UpdateByQueryRequest
+import org.elasticsearch.script.Script
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.builder.SearchSourceBuilder
@@ -17,6 +21,20 @@ import java.time.LocalDate
 
 @Repository
 class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCustomRepository {
+
+    private fun getClient() =
+        RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
+
+    private fun performSearch(
+        searchRequest: SearchRequest?,
+        requestOptions: RequestOptions = RequestOptions.DEFAULT
+    ): SearchResponse {
+        val searchResponse: SearchResponse
+        getClient()
+            .also { searchResponse = it.search(searchRequest, requestOptions) }
+            .close()
+        return searchResponse
+    }
 
     override fun queryDocuments(
         tenant: String,
@@ -58,16 +76,19 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
         }
 
         val startingIndex = (page - 1) * pageSize
-        val searchSourceBuilder = SearchSourceBuilder().query(boolQueryBuilder).from(startingIndex).size(pageSize)
+        val searchSourceBuilder =
+            SearchSourceBuilder()
+                .query(boolQueryBuilder)
+                .from(startingIndex)
+                .size(pageSize)
         if (text.isBlank()) searchSourceBuilder.sort("status")
-        val searchRequest = SearchRequest().source(searchSourceBuilder)
+        val searchRequest = SearchRequest("documents").source(searchSourceBuilder)
 
-        val client = RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
-        val searchResponse = client.search(searchRequest, RequestOptions.DEFAULT)
+        val searchResponse = performSearch(searchRequest)
 
-        val docList = searchResponse.hits.sortedBy { hit -> hit.score }.map { hit -> mapper.convertValue(hit.sourceAsMap, Document::class.java) }
-
-        client.close()
+        val docList = searchResponse.hits
+            .sortedBy { hit -> hit.score }
+            .map { hit -> mapper.convertValue(hit.sourceAsMap, Document::class.java) }
 
         return Pair(searchResponse.hits.totalHits?.value ?: -1, docList)
     }
@@ -77,31 +98,50 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
             QueryBuilders.boolQuery()
                 .filter(QueryBuilders.termQuery("tenant", tenant))
 
-        val searchSourceBuilder = SearchSourceBuilder().query(boolQueryBuilder).aggregation(AggregationBuilders.terms("group_by_category").field("category_id")).size(0)
-        val searchRequest = SearchRequest().source(searchSourceBuilder)
+        val searchSourceBuilder =
+            SearchSourceBuilder()
+                .query(boolQueryBuilder)
+                .aggregation(AggregationBuilders.terms("group_by_category").field("category_id"))
+                .size(0)
+        val searchRequest = SearchRequest("documents").source(searchSourceBuilder)
 
-        val client = RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
-        val searchResponse = client.search(searchRequest, RequestOptions.DEFAULT)
-
-        client.close()
+        val searchResponse = performSearch(searchRequest)
 
         return searchResponse.aggregations.get<Terms>("group_by_category").buckets.associate { it.key as Long to it.docCount }
     }
 
-    override fun getDocCountByCategory(tenant: String, categoryId: Long) : Long {
+    override fun getDocCountByCategory(tenant: String, categoryId: Long): Long {
         val boolQueryBuilder =
             QueryBuilders.boolQuery()
                 .filter(QueryBuilders.termQuery("tenant", tenant))
                 .filter(QueryBuilders.termQuery("category_id", categoryId))
 
-        val searchSourceBuilder = SearchSourceBuilder().query(boolQueryBuilder).size(0)
-        val searchRequest = SearchRequest().source(searchSourceBuilder)
+        val searchSourceBuilder =
+            SearchSourceBuilder()
+                .query(boolQueryBuilder)
+                .size(0)
+        val searchRequest = SearchRequest("documents").source(searchSourceBuilder)
 
-        val client = RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
-        val searchResponse = client.search(searchRequest, RequestOptions.DEFAULT)
-
-        client.close()
+        val searchResponse = performSearch(searchRequest)
 
         return searchResponse.hits.totalHits?.value ?: 0
+    }
+
+    override fun updateDocsTenantAcronym(tenant: String, newTenant: String): Long {
+        val boolQueryBuilder =
+            QueryBuilders.boolQuery()
+                .filter(QueryBuilders.termQuery("tenant", tenant))
+
+        val updateByQueryRequest =
+            UpdateByQueryRequest("documents")
+                .setQuery(boolQueryBuilder)
+                .setScript(Script("ctx._source.tenant = '$newTenant'"))
+
+        val updateResponse: BulkByScrollResponse
+        getClient()
+            .also { updateResponse = it.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT) }
+            .close()
+
+        return updateResponse.updated
     }
 }

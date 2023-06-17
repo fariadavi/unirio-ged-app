@@ -21,4 +21,6 @@ interface DocumentCustomRepository {
     fun getMapOfCategoriesWithDocCount(tenant: String) : Map<Long, Long>
 
     fun getDocCountByCategory(tenant: String, categoryId: Long) : Long
+
+    fun updateDocsTenantAcronym(tenant: String, newTenant: String) : Long
 }
