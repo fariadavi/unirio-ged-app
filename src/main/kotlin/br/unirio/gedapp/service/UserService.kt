@@ -1,6 +1,7 @@
 package br.unirio.gedapp.service
 
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
+import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.domain.*
 import br.unirio.gedapp.repository.UserPermissionRepository
 import br.unirio.gedapp.repository.UserPublicPermissionRepository
@@ -99,7 +100,7 @@ class UserService(
     fun getCurrentUser(): User {
         val auth = SecurityContextHolder.getContext().authentication
         if (auth is AnonymousAuthenticationToken)
-            throw ResourceNotFoundException()
+            throw UnauthorizedException()
 
         val userEmail = auth.name
         return getByEmail(userEmail)
