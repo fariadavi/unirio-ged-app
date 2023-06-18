@@ -66,20 +66,20 @@ class DocumentService(
         return newDoc
     }
 
-    fun update(docId: String, newDataDoc: Document, file: MultipartFile?): Document {
+    fun update(docId: String, newDataDoc: DocumentDTO, file: MultipartFile?): Document {
         var existingDoc = getById(docId)
 
         if (newDataDoc.title.isNotBlank())
             existingDoc = existingDoc.copy(title = newDataDoc.title)
 
-        if (newDataDoc.summary != null)
+        if (newDataDoc.summary.isNotBlank())
             existingDoc = existingDoc.copy(summary = newDataDoc.summary)
 
         if (newDataDoc.date != null)
             existingDoc = existingDoc.copy(date = newDataDoc.date)
 
-        if (newDataDoc.category != -1L)
-            existingDoc = existingDoc.copy(category = newDataDoc.category)
+        if (newDataDoc.categoryId != -1L)
+            existingDoc = existingDoc.copy(category = newDataDoc.categoryId)
 
         if (file?.originalFilename != null) {
             val existingDocFile = getFile(existingDoc)
@@ -244,9 +244,9 @@ class DocumentService(
         return try {
             Document(
                 tenant = tenant,
-                fileName = googleDoc.name.trim(),
+                fileName = googleDoc.name.trim() + if (googleDoc.type == "document") ".pdf" else "",
                 title = googleDoc.name.trim(),
-                summary = googleDoc.description,
+                summary = googleDoc.description.takeUnless { it.isNullOrBlank() },
                 mediaType = googleDoc.mimeType,
                 category = googleDoc.category,
                 date = LocalDate.parse(googleDoc.date),

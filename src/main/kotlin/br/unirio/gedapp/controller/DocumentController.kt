@@ -18,7 +18,7 @@ class DocumentController(
 ) {
     @GetMapping("/{id}")
     fun getDocument(@PathVariable id: String) =
-        DocumentDTO(docSvc.getById(id))
+        docSvc.createDTO(docSvc.getById(id))
             .let { ResponseEntity.ok(it) }
 
     @PostMapping(consumes = ["multipart/form-data"])
@@ -37,7 +37,7 @@ class DocumentController(
     @PatchMapping("/{id}", consumes = ["multipart/form-data"])
     fun updateDocument(
         @PathVariable id: String,
-        @RequestPart document: Document,
+        @RequestPart document: DocumentDTO,
         @RequestPart(required = false) file: MultipartFile?
     ) = docSvc.update(id, document, file)
         .let { ResponseEntity.ok(it) }
