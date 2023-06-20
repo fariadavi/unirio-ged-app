@@ -52,11 +52,19 @@ class DocumentService(
             .takeIf { it.tenant == tenantResolver.resolveCurrentTenantIdentifier() }
             ?: throw ResourceNotFoundException()
 
-    fun insert(document: Document, file: MultipartFile? = null): Document {
-        var newDoc = document
+    fun insert(document: DocumentDTO, file: MultipartFile? = null): Document {
+        var newDoc = Document(
+            tenant = tenantResolver.resolveCurrentTenantIdentifier(),
+            title = document.title,
+            date = document.date,
+            summary = document.summary,
+            category = document.categoryId,
+            registeredBy = userSvc.getCurrentUser().id,
+            registeredAt = LocalDateTime.now()
+        )
 
         if (file != null)
-            newDoc = document.copy(fileName = file.originalFilename!!)
+            newDoc = newDoc.copy(fileName = file.originalFilename!!)
 
         newDoc = docRepo.save(newDoc)
 
@@ -252,7 +260,7 @@ class DocumentService(
                 date = LocalDate.parse(googleDoc.date),
                 registeredAt = LocalDateTime.now(),
                 registeredBy = userId
-            ).let { insert(it) }
+            ).let { docRepo.save(it) }
         } catch (e: Exception) {
             System.err.println("Unable to save document " + googleDoc.name + " | " + googleDoc.id) // TODO replace with log
             e.printStackTrace()

@@ -1,6 +1,5 @@
 package br.unirio.gedapp.controller
 
-import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.dto.DocumentDTO
 import br.unirio.gedapp.domain.dto.GoogleDriveDocumentDTO
 import br.unirio.gedapp.service.DocumentService
@@ -23,7 +22,7 @@ class DocumentController(
 
     @PostMapping(consumes = ["multipart/form-data"])
     fun addDocument(
-        @RequestPart document: Document,
+        @RequestPart document: DocumentDTO,
         @RequestPart file: MultipartFile
     ) = docSvc.insert(document, file)
         .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
