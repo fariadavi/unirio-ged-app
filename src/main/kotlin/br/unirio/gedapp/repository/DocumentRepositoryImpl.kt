@@ -15,6 +15,7 @@ import org.elasticsearch.script.Script
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.builder.SearchSourceBuilder
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
@@ -82,13 +83,17 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
                 .from(startingIndex)
                 .size(pageSize)
         if (text.isBlank()) searchSourceBuilder.sort("status")
-        val searchRequest = SearchRequest("documents").source(searchSourceBuilder)
+        if (text.isNotBlank()) searchSourceBuilder.highlighter(HighlightBuilder().field("content").preTags("<strong>").postTags("</strong>"))
+        val searchRequest = SearchRequest().source(searchSourceBuilder)
 
         val searchResponse = performSearch(searchRequest)
 
         val docList = searchResponse.hits
             .sortedBy { hit -> hit.score }
-            .map { hit -> mapper.convertValue(hit.sourceAsMap, Document::class.java) }
+            .map { hit ->
+                mapper.convertValue(hit.sourceAsMap, Document::class.java).copy(id = hit.id)
+                    .also { it.searchMatches = hit.highlightFields.values.flatMap{ h -> h.fragments.map { f -> f.string() } } }
+            }
 
         return Pair(searchResponse.hits.totalHits?.value ?: -1, docList)
     }

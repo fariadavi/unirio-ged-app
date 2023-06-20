@@ -49,4 +49,7 @@ data class Document(
 
     @Field(type = FieldType.Date, format = [DateFormat.date_hour_minute_second_millis])
     val registeredAt: LocalDateTime? = null
-)
+) {
+    @Transient
+    var searchMatches: List<String> = emptyList()
+}
