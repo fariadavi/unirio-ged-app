@@ -76,7 +76,7 @@ class DepartmentService(
             throw DataIntegrityViolationException("There are users associated with this department. It's not possible to delete an active department.")
         }
 
-        tenantSvc.dropSchema(dept.acronym)
+        tenantSvc.dropSchema(dept.acronym.lowercase())
     }
 
     fun batchUpdate(editedDepartments: List<Department>): Pair<List<Department>, Int> {
