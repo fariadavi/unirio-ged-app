@@ -67,31 +67,39 @@ class UserService(
         return userRepo.save(updatedUser)
     }
 
-    fun updatePermissions(userId: Long, permissions: EnumSet<Permission>): User {
+    fun updatePermissions(userId: Long, permissions: EnumSet<Permission>, type: String? = null): User {
         var user = getById(userId)
 
-        val deptPermissionList = permissions.filter { it.level == PermissionLevel.DEPARTMENT }
-        if (user.currentDepartment != null && deptPermissionList.isNotEmpty()) {
-            val userPermission = EnumSet.copyOf(deptPermissionList)
+        if (type.isNullOrBlank() || type == "department")
+            user = updateDeptPermissions(user, permissions.filter { it.level == PermissionLevel.DEPARTMENT })
+
+        if (type.isNullOrBlank() || type == "system")
+            user = updateSystemPermissions(user, permissions.filter { it.level == PermissionLevel.SYSTEM })
+
+        return user
+    }
+
+    private fun updateDeptPermissions(user: User, deptPermissionList: List<Permission>): User {
+        if (user.currentDepartment != null) {
+            val userPermission = if (deptPermissionList.isNotEmpty()) EnumSet.copyOf(deptPermissionList) else EnumSet.noneOf(Permission::class.java)
             if (user.userPermission?.permissions != userPermission) {
                 val permissionsDept = user.userPermission?.copy(permissions = userPermission) ?: UserPermission(user, userPermission)
                 userPermissionRepo.save(permissionsDept)
 
-                user = user.copy(userPermission = permissionsDept)
+                return user.copy(userPermission = permissionsDept)
             }
         }
+        return user
+    }
 
-        val systemPermissionList = permissions.filter { it.level == PermissionLevel.SYSTEM }
-        if (systemPermissionList.isNotEmpty()) {
-            val userPublicPermission = EnumSet.copyOf(systemPermissionList)
-            if (user.userPublicPermission?.permissions != userPublicPermission) {
-                val permissionsSystem = user.userPublicPermission?.copy(permissions = userPublicPermission) ?: UserPublicPermission(user, userPublicPermission)
-                userPublicPermissionRepo.save(permissionsSystem)
+    private fun updateSystemPermissions(user: User, systemPermissionList: List<Permission>): User {
+        val userPublicPermission = if (systemPermissionList.isNotEmpty()) EnumSet.copyOf(systemPermissionList) else EnumSet.noneOf(Permission::class.java)
+        if (user.userPublicPermission?.permissions != userPublicPermission) {
+            val permissionsSystem = user.userPublicPermission?.copy(permissions = userPublicPermission) ?: UserPublicPermission(user, userPublicPermission)
+            userPublicPermissionRepo.save(permissionsSystem)
 
-                user = user.copy(userPublicPermission = permissionsSystem)
-            }
+            return user.copy(userPublicPermission = permissionsSystem)
         }
-
         return user
     }
 

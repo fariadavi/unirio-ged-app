@@ -62,10 +62,12 @@ class UserController(
     }
 
     @PatchMapping("/{id}/permission")
-    fun updateUserPermission(@PathVariable id: Long, @RequestBody permissions: EnumSet<Permission>): ResponseEntity<User> {
-        val modifiedUser = userSvc.updatePermissions(id, permissions)
-        return ResponseEntity.ok(modifiedUser)
-    }
+    fun updateUserPermission(
+        @PathVariable id: Long,
+        @RequestParam(required = false, defaultValue = "") type: String?,
+        @RequestBody permissions: EnumSet<Permission>) =
+        userSvc.updatePermissions(id, permissions, type)
+            .let { ResponseEntity.ok(it) }
 
     @PatchMapping("/permission")
     fun updateUsersPermission(@RequestBody userPermissionMap: Map<Long, EnumSet<Permission>>): ResponseEntity<List<User>> {
