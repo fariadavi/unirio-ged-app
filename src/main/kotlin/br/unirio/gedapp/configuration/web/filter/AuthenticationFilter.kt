@@ -45,7 +45,7 @@ class AuthenticationFilter(
                 SecurityContextHolder.getContext().authentication = authenticationTokenObj
 
             } catch (e: Exception) {
-                logger.error("AuthenticationFilter: Error authenticating token $token")
+                logger.error("AuthenticationFilter: Error authenticating token $token", e)
                 SecurityContextHolder.clearContext()
             }
         }

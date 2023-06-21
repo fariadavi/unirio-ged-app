@@ -3,6 +3,7 @@ package br.unirio.gedapp.controller
 import br.unirio.gedapp.service.AuthenticationService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -18,6 +19,8 @@ class AuthenticationController(@Autowired private val authSvc: AuthenticationSer
         return ResponseEntity.ok(jwt)
     }
 
-    @PostMapping("/logout")
-    fun logout(): ResponseEntity<String> = ResponseEntity.ok("")
+    @GetMapping("/refresh")
+    fun refreshToken() =
+        authSvc.refreshTokenForCurrentUser()
+            .let{ ResponseEntity.ok(it) }
 }

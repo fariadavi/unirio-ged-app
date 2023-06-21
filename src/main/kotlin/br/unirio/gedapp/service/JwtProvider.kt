@@ -21,8 +21,8 @@ class JwtProvider(@Autowired val jwtConfig: JwtConfig) {
 
         return Jwts.builder()
             .setSubject(authTokenObj.name)
-            .setIssuedAt(Date(issuedAt * 1000))
-            .setExpiration(Date(expirationTime * 1000))
+            .setIssuedAt(Date(issuedAt))
+            .setExpiration(Date(expirationTime))
             .signWith(key, SignatureAlgorithm.HS512)
             .compact()
     }
