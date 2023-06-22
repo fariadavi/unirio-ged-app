@@ -105,14 +105,15 @@ class DocumentService(
     }
 
     fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File?) =
-        CoroutineScope(EmptyCoroutineContext).launch { // process file content asynchronously
-            fileUtils.transferFile(file, doc.tenant, doc.id!!)
-            if (currentFile != null)
-                fileUtils.deleteFile(doc.tenant, currentFile.name)
+        fileUtils.transferFile(file, doc.tenant, doc.id!!).let {
+            CoroutineScope(EmptyCoroutineContext).launch { // process file content asynchronously
+                if (currentFile != null)
+                    fileUtils.deleteFile(doc.tenant, currentFile.name)
 
-            processFile(doc.copy(fileName = file.originalFilename!!))
+                processFile(doc.copy(fileName = file.originalFilename!!))
 
-            //TODO somehow notify user that the file status has been updated for either success or fail
+                //TODO somehow notify user that the file status has been updated for either success or fail
+            }
         }
 
     private fun processFile(doc: Document) {
