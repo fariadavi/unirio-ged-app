@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter
 
 data class DocumentDTO(
     var id: String? = null,
+    var tenant: String? = null,
     var fileName: String? = null,
     var title: String,
     var summary: String,
@@ -28,7 +29,8 @@ data class DocumentDTO(
         get() = registeredAt?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
     constructor(document: Document) : this(
-        document.id!!,
+        document.id,
+        document.tenant,
         document.fileName,
         document.title,
         document.summary ?: "",
