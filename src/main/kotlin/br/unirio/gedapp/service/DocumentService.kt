@@ -17,6 +17,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -31,6 +32,8 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.coroutines.EmptyCoroutineContext
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class DocumentService(
@@ -118,6 +121,9 @@ class DocumentService(
 
     private fun processFile(doc: Document) {
         val filepath = fileUtils.getFilePath(doc.tenant, doc.id!!, doc.fileName)
+
+        logger.info("Processing file at '$filepath' for Document '${doc.title}' (${doc.id})")
+
         var docCopy = docRepo.save(doc.copy(status = DocumentStatus.PROCESSING.ordinal))
 
         val (docContent, mediaType, extractionStatus) = extractContents(filepath)
@@ -140,7 +146,7 @@ class DocumentService(
             if (docContent.isBlank()) extractionStatus = DocumentStatus.EMPTY_CONTENT
         } catch (e: Exception) {
             extractionStatus = DocumentStatus.FAILED
-            e.printStackTrace() // TODO log properly this error
+            logger.error("Failed to parse file at $filepath", e)
         }
 
         return Triple(docContent, mediaType, extractionStatus)
@@ -241,6 +247,8 @@ class DocumentService(
                 launch { importGoogleFiles(docsMap.filter { it.value.email == user }) }
 
             //TODO somehow notify user that the file status has been updated for either success or fail
+        }.invokeOnCompletion {
+            logger.info("Finished importing ${gDocuments.size} documents on tenant $currentTenant")
         }
     }
 
@@ -249,7 +257,8 @@ class DocumentService(
         userId: Long,
         tenant: String
     ): Document? {
-        println("saving " + googleDoc.name + " | " + googleDoc.id) // TODO replace with log
+        logger.info("Creating document for Google Doc '${googleDoc.name}' (${googleDoc.id})")
+
         return try {
             Document(
                 tenant = tenant,
@@ -263,14 +272,13 @@ class DocumentService(
                 registeredBy = userId
             ).let { docRepo.save(it) }
         } catch (e: Exception) {
-            System.err.println("Unable to save document " + googleDoc.name + " | " + googleDoc.id) // TODO replace with log
-            e.printStackTrace()
+            logger.info("Unable to create document for Google Doc '${googleDoc.name}' (${googleDoc.id})", e)
             null
         }
     }
 
     private suspend fun importGoogleFiles(docMap: Map<Document, GoogleDriveDocumentDTO>) = coroutineScope {
-        println("importing docs from Google Drive of " + docMap.values.first().email) // TODO replace with log
+        logger.info("Importing files from Google Drive of '${docMap.values.first().email}'")
 
         val googleCredential = GoogleCredential()
         googleCredential.accessToken = docMap.values.first().token
@@ -290,11 +298,15 @@ class DocumentService(
                     val filepath = fileUtils.getFilePath(document.tenant, document.id!!, document.fileName)
                     FileOutputStream(filepath.toString())
                 } catch (e: Exception) {
-                    System.err.println("Error creating file named " + document.fileName) // TODO replace with log
-                    e.printStackTrace()
+                    logger.error(
+                        "Error creating file for document '${document.fileName}' on tenant '${document.tenant}'",
+                        e
+                    )
                     docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
                     return@launch
                 }
+
+                logger.info("Fetching document '${driveDoc.name}' (${driveDoc.id}) from Google Drive")
 
                 try {
                     val driveFiles = service.files()
@@ -310,12 +322,12 @@ class DocumentService(
                         else -> return@launch
                     }
                 } catch (e: GoogleJsonResponseException) {
-                    System.err.println("Unable to download file from Google Drive: " + e.details) // TODO replace with log
+                    logger.error("Unable to download file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
                     fileUtils.deleteFile(document.tenant, document.id, document.fileName)
                     docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
                     return@launch
                 } catch (e: Exception) {
-                    System.err.println("Error importing file " + document.fileName) // TODO replace with log
+                    logger.error("Error retrieving file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
                     fileUtils.deleteFile(document.tenant, document.id, document.fileName)
                     docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
                     return@launch

@@ -3,6 +3,7 @@ package br.unirio.gedapp.configuration.web.filter
 import br.unirio.gedapp.configuration.yml.JwtConfig
 import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.jsonwebtoken.Claims
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -12,6 +13,8 @@ import org.springframework.web.filter.OncePerRequestFilter
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+
+private val kLogger = KotlinLogging.logger {}
 
 class AuthenticationFilter(
     private val jwtConfig: JwtConfig,
@@ -45,7 +48,7 @@ class AuthenticationFilter(
                 SecurityContextHolder.getContext().authentication = authenticationTokenObj
 
             } catch (e: Exception) {
-                logger.error("AuthenticationFilter: Error authenticating token $token", e)
+                kLogger.error("AuthenticationFilter: Error authenticating token $token", e)
                 SecurityContextHolder.clearContext()
             }
         }

@@ -42,3 +42,9 @@ security:
 application:
     storage:
         path: ${FILE.STORAGE.PATH}
+
+logging:
+    level:
+        root: info
+        sql: info
+        web: info

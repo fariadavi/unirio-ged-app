@@ -8,12 +8,15 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class AuthenticationService(
@@ -73,7 +76,7 @@ class AuthenticationService(
             if (user.firstName != firstName || user.surname != surname || user.currentDepartment == null)
                 userSvc.update(user, newData)
         } catch (e: Exception) {
-            // TODO log error
+            logger.error("Unable to update username of user ${user.id}", e)
         }
     }
 }

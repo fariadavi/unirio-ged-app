@@ -5,11 +5,14 @@ import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Department
 import br.unirio.gedapp.repository.DepartmentRepository
 import br.unirio.gedapp.util.FileUtils
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import java.nio.file.NoSuchFileException
 import javax.transaction.Transactional
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class DepartmentService(
@@ -50,8 +53,8 @@ class DepartmentService(
         if (currentAcronym != updatedDept.acronym!! && updatedDept.acronym.length <= 5) {
             try {
                 fileUtils.renameFolder(currentAcronym.lowercase(), updatedDept.acronym.lowercase())
-            } catch (_: NoSuchFileException) {
-                println("Folder $currentAcronym not found. Maybe no documents exist for this department?") // TODO proper log
+            } catch (e: NoSuchFileException) {
+                logger.error("Folder $currentAcronym not found. Maybe no documents exist for this department?", e)
             }
 
             docSvc.updateDocsTenantAcronym(currentAcronym.lowercase(), updatedDept.acronym.lowercase())
