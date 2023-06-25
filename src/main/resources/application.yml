@@ -10,8 +10,7 @@ spring:
             use-new-id-generator-mappings: false
         show-sql: true
     elasticsearch:
-        rest:
-            uris: ${DATABASE.ELASTICSEARCH.PATH}
+        uris: ${DATABASE.ELASTICSEARCH.PATH}
     jackson:
         serialization:
             indent_output: true
@@ -38,6 +37,8 @@ security:
         prefix: Bearer
         secret: ${JWT.SECRET.KEY}
         expiration: 3600
+    web:
+        allowedOrigins: ${ALLOWED_ORIGINS}
 
 application:
     storage:

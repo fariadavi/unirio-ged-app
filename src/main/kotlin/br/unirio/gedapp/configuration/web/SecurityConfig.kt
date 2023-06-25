@@ -2,6 +2,7 @@ package br.unirio.gedapp.configuration.web
 
 import br.unirio.gedapp.configuration.web.filter.AuthenticationFilter
 import br.unirio.gedapp.configuration.yml.JwtConfig
+import br.unirio.gedapp.configuration.yml.WebConfig
 import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(
     private val userSvc: UserService,
     private val jwtConfig: JwtConfig,
+    private val webConfig: WebConfig,
     private val tokenProvider: JwtProvider
 ) : WebSecurityConfigurerAdapter() {
 
@@ -53,7 +55,7 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://localhost:3000")
+        configuration.allowedOrigins = webConfig.allowedOrigins.split(",").map { it.trim() }
         configuration.allowedMethods = listOf("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH")
         configuration.allowCredentials = true
         configuration.allowedHeaders = listOf("Authorization", "Cache-Control", "Content-Type")
