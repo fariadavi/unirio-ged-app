@@ -17,14 +17,18 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
 
 @Repository
 class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCustomRepository {
 
+    @Value("\${spring.elasticsearch.uris}")
+    lateinit var elasticSearchURL: String
+
     private fun getClient() =
-        RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
+        RestHighLevelClient(RestClient.builder(HttpHost.create(elasticSearchURL)))
 
     private fun performSearch(
         searchRequest: SearchRequest?,
