@@ -3,7 +3,7 @@ package br.unirio.gedapp.configuration.web.filter
 import br.unirio.gedapp.configuration.yml.JwtConfig
 import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import io.jsonwebtoken.Claims
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder

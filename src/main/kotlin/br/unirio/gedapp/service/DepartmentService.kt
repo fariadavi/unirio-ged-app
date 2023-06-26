@@ -5,7 +5,7 @@ import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Department
 import br.unirio.gedapp.repository.DepartmentRepository
 import br.unirio.gedapp.util.FileUtils
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
