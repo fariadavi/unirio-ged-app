@@ -1,8 +1,6 @@
 spring:
     datasource:
-        url: ${DATABASE.POSTGRESQL.PATH}
-        username: ${DATABASE.POSTGRESQL.USERNAME}
-        password: ${DATABASE.POSTGRESQL.PASSWORD}
+        url: ${DB_POSTGRESQL_URL}
     jpa:
         database: postgresql
         hibernate:
@@ -10,7 +8,7 @@ spring:
             use-new-id-generator-mappings: false
         show-sql: true
     elasticsearch:
-        uris: ${DATABASE.ELASTICSEARCH.PATH}
+        uris: ${DB_ELASTICSEARCH_URL}
     jackson:
         serialization:
             indent_output: true
@@ -19,23 +17,22 @@ spring:
             enabled: true
             max-file-size: 20MB
             max-request-size: 20MB
-            location: ${FILE.STORAGE.PATH}
     mail:
         host: smtp.gmail.com
         port: 587
-        username: ${MAIL.USERNAME}
-        password: ${MAIL.PASSWORD}
+        username: ${MAIL_USERNAME}
+        password: ${MAIL_PASSWORD}
         properties.mail.smtp:
             auth: true
             starttls.enable: true
 
 security:
     auth:
-        client-id: ${AUTH.CLIENTID}
+        client-id: ${AUTH_CLIENTID}
     jwt:
         header: Authorization
         prefix: Bearer
-        secret: ${JWT.SECRET.KEY}
+        secret: ${JWT_SECRET_KEY}
         expiration: 3600
     web:
         allowedOrigins: ${ALLOWED_ORIGINS}

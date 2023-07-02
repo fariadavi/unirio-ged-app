@@ -9,8 +9,9 @@ import java.nio.file.Path
 class FileUtils(private val storageConfig: StorageConfig) {
 
     fun getFilePath(tenant: String, docId: String, fileName: String): Path {
-        if (Files.notExists(Path.of(storageConfig.path, tenant)))
-            Files.createDirectory(Path.of(storageConfig.path, tenant))
+        val path = Path.of(storageConfig.path, tenant)
+        if (Files.notExists(path))
+            Files.createDirectory(path)
 
         return Path.of(storageConfig.path, tenant, "${docId}_${fileName}")
     }

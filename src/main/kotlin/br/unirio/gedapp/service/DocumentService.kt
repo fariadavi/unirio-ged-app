@@ -72,7 +72,7 @@ class DocumentService(
         newDoc = docRepo.save(newDoc)
 
         if (file != null)
-            updateDocumentFile(newDoc, file, null)
+            updateDocumentFile(newDoc, file)
 
         return newDoc
     }
@@ -107,7 +107,7 @@ class DocumentService(
         return docRepo.save(existingDoc)
     }
 
-    fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File?) =
+    fun updateDocumentFile(doc: Document, file: MultipartFile, currentFile: File? = null) =
         fileUtils.transferFile(file, doc.tenant, doc.id!!).let {
             CoroutineScope(EmptyCoroutineContext).launch { // process file content asynchronously
                 if (currentFile != null)
