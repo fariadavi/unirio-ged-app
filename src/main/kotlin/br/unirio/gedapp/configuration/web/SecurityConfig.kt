@@ -41,7 +41,7 @@ class SecurityConfig(
             .headers().frameOptions().sameOrigin()
             .and()
             .authorizeRequests()
-            .antMatchers("/api/auth/**").permitAll()
+            .antMatchers("/healthcheck", "/api/auth/**").permitAll()
             .anyRequest().authenticated()
             .and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
