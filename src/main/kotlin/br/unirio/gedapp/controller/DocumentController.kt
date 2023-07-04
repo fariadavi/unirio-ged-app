@@ -1,5 +1,6 @@
 package br.unirio.gedapp.controller
 
+import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.dto.DocumentDTO
 import br.unirio.gedapp.domain.dto.GoogleDriveDocumentDTO
 import br.unirio.gedapp.service.DocumentService
@@ -60,6 +61,8 @@ class DocumentController(
     @GetMapping("/{id}/download")
     fun downloadDocumentFile(@PathVariable id: String): ResponseEntity<ByteArray> {
         val doc = docSvc.getById(id)
+        if (doc.fileName.isBlank()) throw ResourceNotFoundException()
+
         val file = docSvc.getFile(doc)
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${doc.fileName}\"")
