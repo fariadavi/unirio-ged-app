@@ -5,6 +5,7 @@ import br.unirio.gedapp.service.JwtProvider
 import br.unirio.gedapp.service.UserService
 import mu.KotlinLogging
 import io.jsonwebtoken.Claims
+import io.jsonwebtoken.ExpiredJwtException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
@@ -47,8 +48,12 @@ class AuthenticationFilter(
 
                 SecurityContextHolder.getContext().authentication = authenticationTokenObj
 
+            } catch (e: ExpiredJwtException) {
+                kLogger.error("Rejected attempt to login with expired token $token.", e.message)
+                SecurityContextHolder.clearContext()
+
             } catch (e: Exception) {
-                kLogger.error("AuthenticationFilter: Error authenticating token $token", e)
+                kLogger.error("Error authenticating token $token", e)
                 SecurityContextHolder.clearContext()
             }
         }
