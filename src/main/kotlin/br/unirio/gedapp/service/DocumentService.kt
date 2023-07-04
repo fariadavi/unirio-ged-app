@@ -302,7 +302,7 @@ class DocumentService(
                         "Error creating file for document '${document.fileName}' on tenant '${document.tenant}'",
                         e
                     )
-                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
+                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
                     return@launch
                 }
 
@@ -324,12 +324,12 @@ class DocumentService(
                 } catch (e: GoogleJsonResponseException) {
                     logger.error("Unable to download file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
                     fileUtils.deleteFile(document.tenant, document.id, document.fileName)
-                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
+                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
                     return@launch
                 } catch (e: Exception) {
                     logger.error("Error retrieving file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
                     fileUtils.deleteFile(document.tenant, document.id, document.fileName)
-                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal))
+                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
                     return@launch
                 }
 

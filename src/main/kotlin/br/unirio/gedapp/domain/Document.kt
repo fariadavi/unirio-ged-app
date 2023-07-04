@@ -39,6 +39,9 @@ data class Document(
     @Field(type = FieldType.Integer)
     val status: Int = DocumentStatus.PENDING.ordinal,
 
+    @Field(type = FieldType.Text)
+    val statusDetails: String? = null,
+
     @JsonAlias("category_id")
     @Field(type = FieldType.Long, name = "category_id")
     val category: Long = -1L,
