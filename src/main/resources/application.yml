@@ -39,7 +39,7 @@ security:
 
 application:
     storage:
-        path: ${FILE.STORAGE.PATH}
+        path: ${FILE_STORAGE_PATH:}
 
 logging:
     level:
