@@ -81,9 +81,11 @@ class UserService(
 
     private fun updateDeptPermissions(user: User, deptPermissionList: List<Permission>): User {
         if (user.currentDepartment != null) {
-            val userPermission = if (deptPermissionList.isNotEmpty()) EnumSet.copyOf(deptPermissionList) else EnumSet.noneOf(Permission::class.java)
-            if (user.userPermission?.permissions != userPermission) {
-                val permissionsDept = user.userPermission?.copy(permissions = userPermission) ?: UserPermission(user, userPermission)
+            val newPermissions = if (deptPermissionList.isNotEmpty()) EnumSet.copyOf(deptPermissionList) else EnumSet.noneOf(Permission::class.java)
+            if (user.userPermission?.permissions != newPermissions) {
+                validateDeptPermissionsEdit(user, newPermissions)
+
+                val permissionsDept = user.userPermission?.copy(permissions = newPermissions) ?: UserPermission(user, newPermissions)
                 userPermissionRepo.save(permissionsDept)
 
                 return user.copy(userPermission = permissionsDept)
@@ -92,16 +94,42 @@ class UserService(
         return user
     }
 
+    private fun validateDeptPermissionsEdit(user: User, newPermissions: EnumSet<Permission>) {
+        if (user.userPermission != null
+            && user.userPermission.permissions.contains(Permission.MANAGE_DEPT_PERM)
+            && !newPermissions.contains(Permission.MANAGE_DEPT_PERM)
+            && !deptHasOtherManagers(user.id)
+        )
+            throw UnauthorizedException() //TODO throw appropriate exception
+    }
+
+    private fun deptHasOtherManagers(userId: Long) =
+        userRepo.findAnyInDeptWithManagePermissionsExceptUser(Permission.MANAGE_DEPT_PERM.toString(), userId)
+
     private fun updateSystemPermissions(user: User, systemPermissionList: List<Permission>): User {
-        val userPublicPermission = if (systemPermissionList.isNotEmpty()) EnumSet.copyOf(systemPermissionList) else EnumSet.noneOf(Permission::class.java)
-        if (user.userPublicPermission?.permissions != userPublicPermission) {
-            val permissionsSystem = user.userPublicPermission?.copy(permissions = userPublicPermission) ?: UserPublicPermission(user, userPublicPermission)
+        val newPublicPermissions = if (systemPermissionList.isNotEmpty()) EnumSet.copyOf(systemPermissionList) else EnumSet.noneOf(Permission::class.java)
+        if (user.userPublicPermission?.permissions?.toString() != newPublicPermissions.toString()) {
+            validateSystemPermissionsEdit(user, newPublicPermissions)
+
+            val permissionsSystem = user.userPublicPermission?.copy(permissions = newPublicPermissions) ?: UserPublicPermission(user, newPublicPermissions)
             userPublicPermissionRepo.save(permissionsSystem)
 
             return user.copy(userPublicPermission = permissionsSystem)
         }
         return user
     }
+
+    private fun validateSystemPermissionsEdit(user: User, newPermissions: EnumSet<Permission>) {
+        if (user.userPublicPermission != null
+            && user.userPublicPermission.permissions.contains(Permission.MANAGE_SYSTEM_PERM)
+            && !newPermissions.contains(Permission.MANAGE_SYSTEM_PERM)
+            && !systemHasOtherManagers(user.id)
+        )
+            throw UnauthorizedException() //TODO throw appropriate exception
+    }
+
+    private fun systemHasOtherManagers(userId: Long) =
+        userRepo.findAnyWithManagePermissionsExceptUser(Permission.MANAGE_SYSTEM_PERM.toString(), userId)
 
     override fun loadUserByUsername(email: String): UserDetails = getByEmail(email)
 
