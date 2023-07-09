@@ -175,7 +175,10 @@ class UserService(
 
     @Transactional
     fun removeUserFromCurrentDepartment(userId: Long) {
-        val userPermission = getById(userId).userPermission
+        val user = getById(userId)
+        validateDeptPermissionsEdit(user, EnumSet.noneOf(Permission::class.java))
+
+        val userPermission = user.userPermission
         if (userPermission != null) userPermissionRepo.delete(userPermission)
 
         val currentDepartment = getCurrentUser().currentDepartment
