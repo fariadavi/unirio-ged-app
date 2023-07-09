@@ -17,12 +17,20 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
-import mu.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.apache.tika.Tika
+import mu.KotlinLogging
+import org.apache.tika.detect.DefaultDetector
+import org.apache.tika.io.TikaInputStream
+import org.apache.tika.metadata.Metadata
+import org.apache.tika.parser.AutoDetectParser
+import org.apache.tika.parser.ParseContext
+import org.apache.tika.parser.Parser
+import org.apache.tika.parser.ocr.TesseractOCRConfig
+import org.apache.tika.sax.BodyContentHandler
+import org.apache.tika.sax.WriteOutContentHandler
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -141,8 +149,28 @@ class DocumentService(
         var extractionStatus = DocumentStatus.PROCESSED
 
         try {
-            docContent = Tika().parseToString(filepath)
-            mediaType = Tika().detect(filepath)
+            val config = TesseractOCRConfig()
+            config.language = "por+eng"
+
+            val metadata = Metadata()
+            docContent = TikaInputStream.get(filepath, metadata).use {
+                val parser = AutoDetectParser()
+
+                val context = ParseContext()
+                context.set(TesseractOCRConfig::class.java, config)
+                context.set(Parser::class.java, parser)
+
+                val handler = WriteOutContentHandler(100 * 1000) // default is 100k characters
+
+                parser.parse(it, BodyContentHandler(handler), metadata, context)
+
+                return@use handler.toString()
+            }
+
+            mediaType = TikaInputStream.get(filepath, metadata).use {
+                DefaultDetector().detect(it, metadata).toString()
+            }
+
             if (docContent.isBlank()) extractionStatus = DocumentStatus.EMPTY_CONTENT
         } catch (e: Exception) {
             extractionStatus = DocumentStatus.FAILED
