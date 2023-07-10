@@ -1,5 +1,7 @@
 package br.unirio.gedapp.service
 
+import br.unirio.gedapp.controller.exceptions.LastRemainingDeptManagerException
+import br.unirio.gedapp.controller.exceptions.LastRemainingSystemManagerException
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.domain.*
@@ -104,7 +106,7 @@ class UserService(
             && !newPermissions.contains(Permission.MANAGE_DEPT_PERM)
             && !deptHasOtherManagers(user.id)
         )
-            throw UnauthorizedException() //TODO throw appropriate exception
+            throw LastRemainingDeptManagerException()
     }
 
     private fun deptHasOtherManagers(userId: Long) =
@@ -129,7 +131,7 @@ class UserService(
             && !newPermissions.contains(Permission.MANAGE_SYSTEM_PERM)
             && !systemHasOtherManagers(user.id)
         )
-            throw UnauthorizedException() //TODO throw appropriate exception
+            throw LastRemainingSystemManagerException()
     }
 
     private fun systemHasOtherManagers(userId: Long) =
