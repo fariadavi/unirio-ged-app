@@ -38,6 +38,8 @@ security:
         allowedOrigins: ${ALLOWED_ORIGINS}
 
 application:
+    tesseract:
+        language: ${TESSERACT_LANG:por+eng}
     storage:
         path: ${FILE_STORAGE_PATH:}
 

@@ -3,6 +3,7 @@ package br.unirio.gedapp.service
 import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver
 import br.unirio.gedapp.configuration.web.tenant.TenantIdentifierResolver.Companion.DEFAULT_TENANT
 import br.unirio.gedapp.configuration.yml.StorageConfig
+import br.unirio.gedapp.configuration.yml.TesseractConfig
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.domain.Document
@@ -46,6 +47,7 @@ private val logger = KotlinLogging.logger {}
 @Service
 class DocumentService(
     @Autowired storageConfig: StorageConfig,
+    @Autowired val tesseractConfig: TesseractConfig,
     private val catSvc: CategoryService,
     private val userSvc: UserService,
     private val docRepo: DocumentRepository,
@@ -153,7 +155,7 @@ class DocumentService(
 
         try {
             val config = TesseractOCRConfig()
-            config.language = "por+eng"
+            config.language = tesseractConfig.language
 
             val metadata = Metadata()
             docContent = TikaInputStream.get(filepath, metadata).use {
@@ -163,7 +165,7 @@ class DocumentService(
                 context.set(TesseractOCRConfig::class.java, config)
                 context.set(Parser::class.java, parser)
 
-                val handler = WriteOutContentHandler(100 * 1000) // default is 100k characters
+                val handler = WriteOutContentHandler(100_000) // set default write limit as 100k characters
 
                 parser.parse(it, BodyContentHandler(handler), metadata, context)
 
