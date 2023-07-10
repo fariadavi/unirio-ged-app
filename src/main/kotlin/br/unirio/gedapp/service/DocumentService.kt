@@ -103,7 +103,10 @@ class DocumentService(
         if (file?.originalFilename != null) {
             val existingDocFile = getFile(existingDoc)
 
-            if (!existingDocFile.readBytes().contentEquals(file.bytes)) {
+            if (existingDoc.status == DocumentStatus.FAILED.ordinal
+                || existingDoc.status == DocumentStatus.EMPTY_CONTENT.ordinal
+                || !existingDocFile.readBytes().contentEquals(file.bytes)
+            ) {
                 existingDoc = existingDoc.copy(status = DocumentStatus.PENDING.ordinal, content = "", mediaType = null)
 
                 updateDocumentFile(existingDoc, file, existingDocFile)
