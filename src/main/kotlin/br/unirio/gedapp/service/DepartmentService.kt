@@ -50,7 +50,7 @@ class DepartmentService(
 
         val updatedDept = deptRepo.save(existingDept)
 
-        if (currentAcronym != updatedDept.acronym!! && updatedDept.acronym.length <= 5) {
+        if (currentAcronym.lowercase() != updatedDept.acronym!!.lowercase() && updatedDept.acronym.length <= 5) {
             try {
                 fileUtils.renameFolder(currentAcronym.lowercase(), updatedDept.acronym.lowercase())
             } catch (e: NoSuchFileException) {
