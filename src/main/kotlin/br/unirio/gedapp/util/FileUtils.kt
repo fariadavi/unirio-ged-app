@@ -25,6 +25,13 @@ class FileUtils(private val storageConfig: StorageConfig) {
     fun transferFile(file: MultipartFile, tenant: String, docId: String, fileName: String?) =
         file.transferTo(getFilePath(tenant, docId, fileName ?: file.originalFilename!!))
 
+    fun deleteDirectory(tenant: String) =
+        Files.walk(Path.of(storageConfig.path, tenant))
+            .sorted(Comparator.reverseOrder())
+            .map(Path::toFile)
+            .forEach(File::delete)
+
+
     fun deleteFile(tenant: String, fileName: String) =
         Files.deleteIfExists(Path.of(storageConfig.path, tenant, fileName))
 

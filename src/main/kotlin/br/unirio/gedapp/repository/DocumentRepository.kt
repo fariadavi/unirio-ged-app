@@ -6,4 +6,6 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
 interface DocumentRepository : ElasticsearchRepository<Document, String>, DocumentCustomRepository {
 
     fun countByTenant(tenant: String): Int
+
+    fun deleteAllByTenant(tenant: String)
 }

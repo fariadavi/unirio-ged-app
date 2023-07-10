@@ -7,7 +7,6 @@ import br.unirio.gedapp.repository.DepartmentRepository
 import br.unirio.gedapp.util.FileUtils
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import java.nio.file.NoSuchFileException
 import javax.transaction.Transactional
@@ -18,6 +17,7 @@ private val logger = KotlinLogging.logger {}
 class DepartmentService(
     @Autowired storageConfig: StorageConfig,
     val docSvc: DocumentService,
+    val userSvc: UserService,
     val deptRepo: DepartmentRepository,
     val tenantSvc: TenantService
 ) {
@@ -69,17 +69,22 @@ class DepartmentService(
 
     @Transactional
     fun delete(dept: Department) {
-        val numDocs = docSvc.getDocCountByTenant(dept.acronym!!)
-        if (numDocs > 0)
-            throw DataIntegrityViolationException("There are $numDocs documents associated with this department. It's not possible to delete an active department.")
+        val tenant = dept.acronym!!.lowercase()
 
-        try {
-            deptRepo.delete(dept)
-        } catch (e: DataIntegrityViolationException) {
-            throw DataIntegrityViolationException("There are users associated with this department. It's not possible to delete an active department.")
-        }
+        //remove all users from dept
+        userSvc.getAllUsersInDepartment(dept).forEach { userSvc.removeUserFromDepartment(it, dept) }
 
-        tenantSvc.dropSchema(dept.acronym.lowercase())
+        //delete docs on elasticsearch
+        docSvc.deleteAllByTenant(tenant)
+
+        //drop tenant schema
+        tenantSvc.dropSchema(tenant)
+
+        //delete department entry in public schema
+        deptRepo.delete(dept)
+
+        //delete tenant directory and all files it contains
+        fileUtils.deleteDirectory(tenant)
     }
 
     fun batchUpdate(editedDepartments: List<Department>): Pair<List<Department>, Int> {

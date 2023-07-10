@@ -187,6 +187,9 @@ class DocumentService(
         fileUtils.deleteFile(existingDoc.tenant, id, existingDoc.fileName)
     }
 
+    fun deleteAllByTenant(tenant: String) =
+        docRepo.deleteAllByTenant(tenant)
+
     fun queryDocuments(
         queryString: String,
         page: Int,

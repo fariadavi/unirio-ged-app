@@ -37,6 +37,10 @@ class UserService(
     fun getAllUsersInCurrentDepartment(): List<User> =
         userRepo.findAllWithCurrentDepartmentPermission()
 
+    fun getAllUsersInDepartment(dept: Department): List<User> =
+        dept.acronym?.let { userRepo.findAllByTenant(it) }
+            ?: emptyList()
+
     fun update(userId: Long, newDataUser: User): User =
         update(getById(userId), newDataUser)
 

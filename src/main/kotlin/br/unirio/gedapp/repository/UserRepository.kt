@@ -14,6 +14,9 @@ interface UserRepository : JpaRepository<User, Long> {
     @Query("SELECT u FROM User u INNER JOIN u.userPermission up")
     fun findAllWithCurrentDepartmentPermission(): List<User>
 
+    @Query("SELECT u FROM User u INNER JOIN u.departments d WHERE d.acronym = :tenant")
+    fun findAllByTenant(tenant: String): List<User>
+
     @Query("SELECT (COUNT(1) > 0) " +
             "FROM User u " +
             "   INNER JOIN u.userPermission up " +

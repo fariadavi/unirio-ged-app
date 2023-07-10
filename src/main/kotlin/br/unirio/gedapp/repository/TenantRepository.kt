@@ -17,6 +17,6 @@ class TenantRepository {
 
     fun dropSchema(schemaName: String) =
         entityManager
-            .createNativeQuery("DROP SCHEMA \"$schemaName\" CASCADE")
+            .createNativeQuery("DROP SCHEMA IF EXISTS \"$schemaName\" CASCADE")
             .executeUpdate()
 }
