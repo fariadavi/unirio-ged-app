@@ -325,43 +325,49 @@ class DocumentService(
                 val document = doc.key
                 val driveDoc = doc.value
 
-                val outputStream = try {
-                    val filepath = fileUtils.getFilePath(document.tenant, document.id!!, document.fileName)
-                    FileOutputStream(filepath.toString())
-                } catch (e: Exception) {
-                    logger.error(
-                        "Error creating file for document '${document.fileName}' on tenant '${document.tenant}'",
-                        e
-                    )
-                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
-                    return@launch
-                }
-
-                logger.info("Fetching document '${driveDoc.name}' (${driveDoc.id}) from Google Drive")
-
                 try {
-                    val driveFiles = service.files()
-                    when (driveDoc.type) {
-                        "file" -> driveFiles
-                            .get(driveDoc.id)
-                            .executeMediaAndDownloadTo(outputStream)
-
-                        "document" -> driveFiles
-                            .export(driveDoc.id, "application/pdf")
-                            .executeMediaAndDownloadTo(outputStream)
-
-                        else -> return@launch
-                    }
-                } catch (e: GoogleJsonResponseException) {
-                    logger.error("Unable to download file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
-                    fileUtils.deleteFile(document.tenant, document.id, document.fileName)
-                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
-                    return@launch
+                    val filepath = fileUtils.getFilePath(document.tenant, document.id!!, document.fileName)
+                    FileOutputStream(filepath.toFile())
                 } catch (e: Exception) {
-                    logger.error("Error retrieving file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
-                    fileUtils.deleteFile(document.tenant, document.id, document.fileName)
+                    logger.error("Error creating file for document '${document.fileName}' on tenant '${document.tenant}'", e)
                     docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
                     return@launch
+
+                }.use {
+                    outputStream ->
+                    logger.info("Fetching document '${driveDoc.name}' (${driveDoc.id}) from Google Drive")
+
+                    try {
+                        val driveFiles = service.files()
+                        when (driveDoc.type) {
+                            "file" -> driveFiles
+                                .get(driveDoc.id)
+                                .executeMediaAndDownloadTo(outputStream)
+
+                            "document" -> driveFiles
+                                .export(driveDoc.id, "application/pdf")
+                                .executeMediaAndDownloadTo(outputStream)
+
+                            else -> return@launch
+                        }
+                    } catch (e: GoogleJsonResponseException) {
+                        logger.error("Unable to download file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
+                        fileUtils.deleteFile(document.tenant, document.id, document.fileName)
+                        docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
+                        return@launch
+
+                    } catch (e: Exception) {
+                        logger.error("Error retrieving file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
+                        fileUtils.deleteFile(document.tenant, document.id, document.fileName)
+                        docRepo.save(
+                            document.copy(
+                                status = DocumentStatus.FAILED.ordinal,
+                                fileName = "",
+                                statusDetails = e.message
+                            )
+                        )
+                        return@launch
+                    }
                 }
 
                 processFile(document)
