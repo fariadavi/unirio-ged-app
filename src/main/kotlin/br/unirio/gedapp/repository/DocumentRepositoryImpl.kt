@@ -1,6 +1,7 @@
 package br.unirio.gedapp.repository
 
 import br.unirio.gedapp.domain.Document
+import br.unirio.gedapp.domain.DocumentStatus
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.http.HttpHost
 import org.elasticsearch.action.search.SearchRequest
@@ -49,7 +50,8 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
         category: Long?,
         user: Long?,
         minDate: LocalDate?,
-        maxDate: LocalDate?
+        maxDate: LocalDate?,
+        status: DocumentStatus?
     ): Pair<Long, Iterable<Document>> {
 
         val boolQueryBuilder =
@@ -79,6 +81,9 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
 
             boolQueryBuilder.filter(rangeBuilder)
         }
+
+        if (status != null)
+            boolQueryBuilder.filter(QueryBuilders.termQuery("status", status.ordinal))
 
         val startingIndex = (page - 1) * pageSize
         val searchSourceBuilder =

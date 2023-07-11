@@ -1,6 +1,7 @@
 package br.unirio.gedapp.controller
 
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
+import br.unirio.gedapp.domain.DocumentStatus
 import br.unirio.gedapp.domain.dto.DocumentDTO
 import br.unirio.gedapp.domain.dto.GoogleDriveDocumentDTO
 import br.unirio.gedapp.service.DocumentService
@@ -20,6 +21,11 @@ class DocumentController(
     fun getDocument(@PathVariable id: String) =
         docSvc.createDTO(docSvc.getById(id))
             .let { ResponseEntity.ok(it) }
+
+
+    @GetMapping("/status")
+    fun getDocumentStatusList() =
+        DocumentStatus.values()
 
     @PostMapping(consumes = ["multipart/form-data"])
     fun addDocument(
@@ -55,8 +61,9 @@ class DocumentController(
         @RequestParam(required = false) category: Long?,
         @RequestParam(required = false, defaultValue = "false") myDocuments: Boolean,
         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") minDate: LocalDate?,
-        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") maxDate: LocalDate?
-    ) = docSvc.queryDocuments(q, page, pageSize, minDate, maxDate, category, myDocuments)
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") maxDate: LocalDate?,
+        @RequestParam(required = false) status: DocumentStatus?
+    ) = docSvc.queryDocuments(q, page, pageSize, minDate, maxDate, category, myDocuments, status)
 
     @GetMapping("/{id}/download")
     fun downloadDocumentFile(@PathVariable id: String): ResponseEntity<ByteArray> {

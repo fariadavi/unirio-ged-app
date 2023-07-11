@@ -1,6 +1,7 @@
 package br.unirio.gedapp.repository
 
 import br.unirio.gedapp.domain.Document
+import br.unirio.gedapp.domain.DocumentStatus
 import org.springframework.data.repository.NoRepositoryBean
 import java.time.LocalDate
 
@@ -15,7 +16,8 @@ interface DocumentCustomRepository {
         category: Long?,
         user: Long?,
         minDate: LocalDate?,
-        maxDate: LocalDate?
+        maxDate: LocalDate?,
+        status: DocumentStatus?
     ): Pair<Long, Iterable<Document>>
 
     fun getMapOfCategoriesWithDocCount(tenant: String) : Map<Long, Long>

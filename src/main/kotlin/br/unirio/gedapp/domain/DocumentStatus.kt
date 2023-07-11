@@ -5,5 +5,6 @@ enum class DocumentStatus {
     PENDING,
     PROCESSED,
     EMPTY_CONTENT,
-    FAILED
+    FAILED_IMPORT,
+    FAILED_PROCESSING
 }

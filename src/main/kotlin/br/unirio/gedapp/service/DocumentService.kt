@@ -105,7 +105,7 @@ class DocumentService(
         if (file?.originalFilename != null) {
             val existingDocFile = getFile(existingDoc)
 
-            if (existingDoc.status == DocumentStatus.FAILED.ordinal
+            if (existingDoc.status == DocumentStatus.FAILED_PROCESSING.ordinal
                 || existingDoc.status == DocumentStatus.EMPTY_CONTENT.ordinal
                 || !existingDocFile.readBytes().contentEquals(file.bytes)
             ) {
@@ -142,7 +142,7 @@ class DocumentService(
         val (docContent, mediaType, extractionStatus) = extractContents(filepath)
         docCopy = docCopy.copy(content = docContent, mediaType = mediaType, status = extractionStatus.ordinal)
 
-        if (extractionStatus === DocumentStatus.FAILED)
+        if (extractionStatus === DocumentStatus.FAILED_PROCESSING)
             docCopy = doc.copy(content = "", mediaType = null)
 
         docRepo.save(docCopy)
@@ -178,7 +178,7 @@ class DocumentService(
 
             if (docContent.isBlank()) extractionStatus = DocumentStatus.EMPTY_CONTENT
         } catch (e: Exception) {
-            extractionStatus = DocumentStatus.FAILED
+            extractionStatus = DocumentStatus.FAILED_PROCESSING
             logger.error("Failed to parse file at $filepath", e)
         }
 
@@ -202,7 +202,8 @@ class DocumentService(
         minDate: LocalDate?,
         maxDate: LocalDate?,
         categoryId: Long?,
-        onlyMyDocs: Boolean
+        onlyMyDocs: Boolean,
+        status: DocumentStatus?
     ): SearchDocumentsResultDTO {
         val currentTenant = tenantResolver.resolveCurrentTenantIdentifier()
         if (currentTenant === DEFAULT_TENANT) throw UnauthorizedException()
@@ -220,7 +221,8 @@ class DocumentService(
             categoryId,
             userId,
             minDate,
-            maxDate
+            maxDate,
+            status
         )
 
         return SearchDocumentsResultDTO(page, pageSize, totalHits, docs.map { createDTO(it) })
@@ -335,7 +337,7 @@ class DocumentService(
                     FileOutputStream(filepath.toFile())
                 } catch (e: Exception) {
                     logger.error("Error creating file for document '${document.fileName}' on tenant '${document.tenant}'", e)
-                    docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
+                    docRepo.save(document.copy(status = DocumentStatus.FAILED_IMPORT.ordinal, fileName = "", statusDetails = e.message))
                     return@launch
 
                 }.use {
@@ -358,7 +360,7 @@ class DocumentService(
                     } catch (e: GoogleJsonResponseException) {
                         logger.error("Unable to download file '${driveDoc.name}' (${driveDoc.id}) from Google Drive", e)
                         fileUtils.deleteFile(document.tenant, document.id, document.fileName)
-                        docRepo.save(document.copy(status = DocumentStatus.FAILED.ordinal, fileName = "", statusDetails = e.message))
+                        docRepo.save(document.copy(status = DocumentStatus.FAILED_IMPORT.ordinal, fileName = "", statusDetails = e.message))
                         return@launch
 
                     } catch (e: Exception) {
@@ -366,7 +368,7 @@ class DocumentService(
                         fileUtils.deleteFile(document.tenant, document.id, document.fileName)
                         docRepo.save(
                             document.copy(
-                                status = DocumentStatus.FAILED.ordinal,
+                                status = DocumentStatus.FAILED_IMPORT.ordinal,
                                 fileName = "",
                                 statusDetails = e.message
                             )
