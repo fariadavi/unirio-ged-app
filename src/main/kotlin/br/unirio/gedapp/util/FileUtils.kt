@@ -1,17 +1,21 @@
 package br.unirio.gedapp.util
 
 import br.unirio.gedapp.configuration.yml.StorageConfig
+import mu.KotlinLogging
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+
+private val logger = KotlinLogging.logger {}
 
 class FileUtils(private val storageConfig: StorageConfig) {
 
     fun getFilePath(tenant: String, docId: String, fileName: String): Path {
         val path = Path.of(storageConfig.path, tenant)
         if (Files.notExists(path))
-            Files.createDirectory(path)
+            runCatching { Files.createDirectory(path) }
+                .onFailure { logger.warn { "Handled an attempt to create already existing ${path.toAbsolutePath()} directory" } }
 
         return Path.of(storageConfig.path, tenant, "${docId}_${fileName}")
     }
