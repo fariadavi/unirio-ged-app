@@ -160,7 +160,7 @@ class UserService(
 
         val savedUser = addUserToDepartment(user, currentUser.currentDepartment!!)
 
-        updatePermissions(savedUser.id, EnumSet.copyOf(Permission.getDefaultPermissions()))
+        updatePermissions(savedUser.id, EnumSet.copyOf(Permission.getDefaultPermissions()), "department")
 
         emailSvc.sendUserInvitedEmail(email, currentUser.fullName, currentUser.currentDepartment)
 
