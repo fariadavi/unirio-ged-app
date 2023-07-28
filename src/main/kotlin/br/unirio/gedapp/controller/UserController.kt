@@ -23,7 +23,14 @@ class UserController(@Autowired private val userSvc: UserService) {
         return ResponseEntity.ok(user)
     }
 
-    @PreAuthorize("hasAuthority('MANAGE_DEPT_PERM')")
+    @PreAuthorize("hasAuthority('MANAGE_SYSTEM_PERM')")
+    @GetMapping
+    fun getAllUsers(): ResponseEntity<Iterable<User>> {
+        val allUsers = userSvc.getAllUsers()
+        return ResponseEntity.ok(allUsers)
+    }
+
+    @PreAuthorize("hasAuthority('MANAGE_DEPT_PERM') or hasAuthority('INVITE_USERS')")
     @GetMapping("/currentdept")
     fun getAllUsersFromCurrentDepartment(): ResponseEntity<Iterable<User>> {
         val usersFromCurrentDept = userSvc.getAllUsersInCurrentDepartment()
