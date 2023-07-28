@@ -1,20 +1,30 @@
 package br.unirio.gedapp.service
 
 import br.unirio.gedapp.domain.Department
-import org.springframework.mail.SimpleMailMessage
+import br.unirio.gedapp.domain.User
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Service
+import java.nio.file.Files
+import java.nio.file.Path
+import javax.mail.internet.MimeMessage
 
 @Service
 class EmailService(val javaMailSender: JavaMailSender) {
 
-    fun sendUserInvitedEmail(recipient: String, invitingUser: String, invitedDepartment: Department) {
-        val msg = SimpleMailMessage()
-        msg.setTo(recipient)
+    fun sendUserInvitedEmail(recipient: String, invitingUser: User, invitedDepartment: Department) {
+        val msg = javaMailSender.createMimeMessage()
 
-        msg.setSubject("UNIRIO GED App - You have been added to ${invitedDepartment.name}")
-        msg.setText("You've been added to department ${invitedDepartment.acronym} by $invitingUser.\n\n" +
-                "Log into UNIRIO GED App by accessing https://github.com/fariadavi/unirio-ged-app-frontend/ and signing in with your google account.")
+        msg.setRecipients(MimeMessage.RecipientType.TO, recipient)
+        msg.subject = "UNIRIO GED App | ${invitedDepartment.name} | Bem-vindo"
+
+        var htmlTemplate: String = Files.readString(Path.of("src/main/resources/email", "template.html"))
+
+        htmlTemplate = htmlTemplate.replace("\${invitingUserName}", invitingUser.firstName ?: "")
+        htmlTemplate = htmlTemplate.replace("\${invitingUserEmail}", invitingUser.email)
+        htmlTemplate = htmlTemplate.replace("\${departmentAcronym}", invitedDepartment.acronym!!)
+        htmlTemplate = htmlTemplate.replace("\${departmentName}", invitedDepartment.name!!)
+
+        msg.setContent(htmlTemplate, "text/html; charset=utf-8")
 
         javaMailSender.send(msg)
     }

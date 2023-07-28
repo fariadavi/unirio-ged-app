@@ -162,7 +162,7 @@ class UserService(
 
         updatePermissions(savedUser.id, EnumSet.copyOf(Permission.getDefaultPermissions()), "department")
 
-        emailSvc.sendUserInvitedEmail(email, currentUser.fullName, currentUser.currentDepartment)
+        emailSvc.sendUserInvitedEmail(email, currentUser, currentUser.currentDepartment)
 
         return savedUser
     }
