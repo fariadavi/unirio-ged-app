@@ -15,11 +15,11 @@ class EmailService(val javaMailSender: JavaMailSender) {
         val msg = javaMailSender.createMimeMessage()
 
         msg.setRecipients(MimeMessage.RecipientType.TO, recipient)
-        msg.subject = "UNIRIO GED App | ${invitedDepartment.name} | Bem-vindo"
+        msg.subject = "UNIRIO GED App | Bem-vindo ao ${invitedDepartment.acronym}"
 
         var htmlTemplate: String = Files.readString(Path.of("src/main/resources/email", "template.html"))
 
-        htmlTemplate = htmlTemplate.replace("\${invitingUserName}", invitingUser.firstName ?: "")
+        htmlTemplate = htmlTemplate.replace("\${invitingUserName}", invitingUser.fullName)
         htmlTemplate = htmlTemplate.replace("\${invitingUserEmail}", invitingUser.email)
         htmlTemplate = htmlTemplate.replace("\${departmentAcronym}", invitedDepartment.acronym!!)
         htmlTemplate = htmlTemplate.replace("\${departmentName}", invitedDepartment.name!!)
