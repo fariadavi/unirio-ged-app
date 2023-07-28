@@ -10,7 +10,7 @@ import br.unirio.gedapp.service.DocumentService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.annotation.Secured
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -40,19 +40,19 @@ class CategoryController(
         }.let { ResponseEntity.ok(it) }
     }
 
-    @Secured("MANAGE_CATEGORIES")
+    @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
     @PostMapping
     fun addCategory(@RequestBody category: CategoryDTO): ResponseEntity<Category> =
         catSvc.create(category)
             .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
 
-    @Secured("MANAGE_CATEGORIES")
+    @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
     @PatchMapping("/{id}")
     fun editCategory(@PathVariable id: Long, @RequestBody category: Category): ResponseEntity<Category> =
         catSvc.update(id, category)
             .let { ResponseEntity.ok(it) }
 
-    @Secured("MANAGE_CATEGORIES")
+    @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
     @DeleteMapping("/{id}")
     fun deleteCategory(@PathVariable id: Long): ResponseEntity<Category> {
         if (catSvc.findChildrenCategory(id).isNotEmpty()) throw CategoryHasChildrenException()

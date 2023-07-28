@@ -9,7 +9,7 @@ import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.annotation.Secured
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -23,14 +23,14 @@ class UserController(@Autowired private val userSvc: UserService) {
         return ResponseEntity.ok(user)
     }
 
-    @Secured("MANAGE_DEPT_PERM")
+    @PreAuthorize("hasAuthority('MANAGE_DEPT_PERM')")
     @GetMapping("/currentdept")
     fun getAllUsersFromCurrentDepartment(): ResponseEntity<Iterable<User>> {
         val usersFromCurrentDept = userSvc.getAllUsersInCurrentDepartment()
         return ResponseEntity.ok(usersFromCurrentDept)
     }
 
-    @Secured("INVITE_USERS")
+    @PreAuthorize("hasAuthority('INVITE_USERS')")
     @PostMapping("/invite")
     fun inviteUser(@RequestParam email: String): ResponseEntity<User> {
         if (userSvc.checkIfUserHasAccessToCurrentDepartment(email))
@@ -40,14 +40,14 @@ class UserController(@Autowired private val userSvc: UserService) {
         return ResponseEntity.status(HttpStatus.CREATED).body(user)
     }
 
-    @Secured("INVITE_USERS")
+    @PreAuthorize("hasAuthority('INVITE_USERS')")
     @PatchMapping("/{id}")
     fun updateUser(@PathVariable id: Long, @RequestBody newDataUser: User): ResponseEntity<User> {
         val modifiedUser = userSvc.update(id, newDataUser)
         return ResponseEntity.ok(modifiedUser)
     }
 
-    @Secured(value = [ "MANAGE_DEPT_PERM", "MANAGE_SYSTEM_PERM" ])
+    @PreAuthorize("hasAuthority('MANAGE_DEPT_PERM') or hasAuthority('MANAGE_SYSTEM_PERM')")
     @PatchMapping("/{id}/permission")
     fun updateUserPermission(
         @PathVariable id: Long,
@@ -56,7 +56,7 @@ class UserController(@Autowired private val userSvc: UserService) {
         userSvc.updatePermissions(id, permissions, type)
             .let { ResponseEntity.ok(it) }
 
-    @Secured(value = [ "MANAGE_DEPT_PERM", "MANAGE_SYSTEM_PERM" ])
+    @PreAuthorize("hasAuthority('MANAGE_DEPT_PERM') or hasAuthority('MANAGE_SYSTEM_PERM')")
     @PatchMapping("/permission")
     fun updateUsersPermission(@RequestBody userPermissionMap: Map<Long, EnumSet<Permission>>): ResponseEntity<List<User>> {
         val (modifiedUserList, numErrors) = userSvc.batchUpdatePermissions(userPermissionMap)
@@ -68,7 +68,7 @@ class UserController(@Autowired private val userSvc: UserService) {
         }
     }
 
-    @Secured(value = [ "MANAGE_DEPT_PERM" ])
+    @PreAuthorize("hasAuthority('MANAGE_DEPT_PERM')")
     @DeleteMapping("/{id}")
     fun removeUserAccess(@PathVariable id: Long): ResponseEntity<User> {
         userSvc.removeUserFromCurrentDepartment(id)

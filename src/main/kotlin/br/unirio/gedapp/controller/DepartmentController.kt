@@ -7,7 +7,7 @@ import br.unirio.gedapp.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.annotation.Secured
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -29,7 +29,7 @@ class DepartmentController(
         return ResponseEntity.ok(allDepts)
     }
 
-    @Secured("MANAGE_DEPARTMENTS")
+    @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     @PostMapping
     fun addDepartment(@RequestBody dept: Department): ResponseEntity<Department> {
         val user = userSvc.getCurrentUser()
@@ -40,14 +40,14 @@ class DepartmentController(
         return ResponseEntity.status(HttpStatus.CREATED).body(newDept)
     }
 
-    @Secured("MANAGE_DEPARTMENTS")
+    @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     @PatchMapping("/{id}")
     fun updateDepartment(@PathVariable id : Long, @RequestBody dept: Department): ResponseEntity<Department> {
         val modifiedDept = deptSvc.update(id, dept)
         return ResponseEntity.ok(modifiedDept)
     }
 
-    @Secured("MANAGE_DEPARTMENTS")
+    @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     @PatchMapping
     fun updateDepartments(@RequestBody editedDepartments: List<Department>): ResponseEntity<List<Department>> {
         val (modifiedDeptList, numErrors) = deptSvc.batchUpdate(editedDepartments)
@@ -60,7 +60,7 @@ class DepartmentController(
         return response.body(modifiedDeptList)
     }
 
-    @Secured("MANAGE_DEPARTMENTS")
+    @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     @DeleteMapping("/{id}")
     fun deleteDepartment(@PathVariable id : Long): ResponseEntity<String> {
         deptSvc.deleteById(id)
