@@ -8,15 +8,14 @@ import br.unirio.gedapp.service.DocumentService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.*
+import org.springframework.security.access.annotation.Secured
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDate
 
 @RestController
 @RequestMapping("/documents")
-class DocumentController(
-    @Autowired private val docSvc: DocumentService
-) {
+class DocumentController(@Autowired private val docSvc: DocumentService) {
     @GetMapping("/{id}")
     fun getDocument(@PathVariable id: String) =
         docSvc.createDTO(docSvc.getById(id))
@@ -27,6 +26,7 @@ class DocumentController(
     fun getDocumentStatusList() =
         DocumentStatus.values()
 
+    @Secured("ADD_DOCS")
     @PostMapping(consumes = ["multipart/form-data"])
     fun addDocument(
         @RequestPart document: DocumentDTO,
@@ -34,6 +34,7 @@ class DocumentController(
     ) = docSvc.insert(document, file)
         .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
 
+    @Secured("ADD_DOCS")
     @PostMapping("/import")
     suspend fun addDocumentList(
         @RequestBody gDocuments: List<GoogleDriveDocumentDTO>
@@ -53,6 +54,7 @@ class DocumentController(
         docSvc.deleteById(id)
             .also { ResponseEntity.ok("Document '$id' have been successfully deleted") }
 
+    @Secured("SEARCH_DOCS")
     @GetMapping("/search")
     fun searchDocuments(
         @RequestParam q: String,
@@ -65,6 +67,7 @@ class DocumentController(
         @RequestParam(required = false) status: DocumentStatus?
     ) = docSvc.queryDocuments(q, page, pageSize, minDate, maxDate, category, myDocuments, status)
 
+    @Secured("SEARCH_DOCS")
     @GetMapping("/{id}/download")
     fun downloadDocumentFile(@PathVariable id: String): ResponseEntity<ByteArray> {
         val doc = docSvc.getById(id)

@@ -8,6 +8,7 @@ import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.controller.exceptions.UnauthorizedException
 import br.unirio.gedapp.domain.Document
 import br.unirio.gedapp.domain.DocumentStatus
+import br.unirio.gedapp.domain.Permission
 import br.unirio.gedapp.domain.dto.DocumentDTO
 import br.unirio.gedapp.domain.dto.GoogleDriveDocumentDTO
 import br.unirio.gedapp.domain.dto.SearchDocumentsResultDTO
@@ -88,7 +89,13 @@ class DocumentService(
     }
 
     fun update(docId: String, newDataDoc: DocumentDTO, file: MultipartFile?): Document {
+        val currentUser = userSvc.getCurrentUser()
         var existingDoc = getById(docId)
+        if (existingDoc.registeredBy != currentUser.id
+            || currentUser.userPermission == null
+            || !currentUser.userPermission.permissions.contains(Permission.EDIT_DOCS_OTHERS)
+        )
+            throw UnauthorizedException()
 
         if (newDataDoc.title.isNotBlank())
             existingDoc = existingDoc.copy(title = newDataDoc.title)
@@ -185,11 +192,22 @@ class DocumentService(
         return Triple(docContent, mediaType, extractionStatus)
     }
 
-    fun deleteById(id: String) {
-        val existingDoc = getById(id)
-        docRepo.deleteById(id)
+    fun delete(document: Document) {
+        docRepo.deleteById(document.id!!)
 
-        fileUtils.deleteFile(existingDoc.tenant, id, existingDoc.fileName)
+        fileUtils.deleteFile(document.tenant, document.id, document.fileName)
+    }
+
+    fun deleteById(id: String) {
+        val currentUser = userSvc.getCurrentUser()
+        val existingDoc = getById(id)
+        if (existingDoc.registeredBy != currentUser.id
+            || currentUser.userPermission == null
+            || !currentUser.userPermission.permissions.contains(Permission.DELETE_DOCS_OTHERS)
+        )
+            throw UnauthorizedException()
+
+        delete(existingDoc)
     }
 
     fun deleteAllByTenant(tenant: String) =
