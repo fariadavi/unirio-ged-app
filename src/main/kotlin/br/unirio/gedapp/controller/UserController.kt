@@ -58,15 +58,17 @@ class UserController(@Autowired private val userSvc: UserService) {
     @PatchMapping("/{id}/permission")
     fun updateUserPermission(
         @PathVariable id: Long,
-        @RequestParam(required = false, defaultValue = "") type: String?,
+        @RequestParam(required = false, defaultValue = "") type: String,
         @RequestBody permissions: EnumSet<Permission>) =
         userSvc.updatePermissions(id, permissions, type)
             .let { ResponseEntity.ok(it) }
 
     @PreAuthorize("hasAuthority('MANAGE_DEPT_PERM') or hasAuthority('MANAGE_SYSTEM_PERM')")
     @PatchMapping("/permission")
-    fun updateUsersPermission(@RequestBody userPermissionMap: Map<Long, EnumSet<Permission>>): ResponseEntity<List<User>> {
-        val (modifiedUserList, numErrors) = userSvc.batchUpdatePermissions(userPermissionMap)
+    fun updateUsersPermission(
+        @RequestParam(required = false, defaultValue = "") type: String,
+        @RequestBody userPermissionMap: Map<Long, EnumSet<Permission>>): ResponseEntity<List<User>> {
+        val (modifiedUserList, numErrors) = userSvc.batchUpdatePermissions(userPermissionMap, type)
 
         return when (numErrors) {
             0 -> ResponseEntity.ok(modifiedUserList)

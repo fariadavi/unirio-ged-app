@@ -211,13 +211,13 @@ class UserService(
     fun checkIfUserHasAccessToCurrentDepartment(email: String) =
         userPermissionRepo.existsByUserEmail(email)
 
-    fun batchUpdatePermissions(userPermissionMap: Map<Long, EnumSet<Permission>>): Pair<List<User>, Int> {
+    fun batchUpdatePermissions(userPermissionMap: Map<Long, EnumSet<Permission>>, type: String): Pair<List<User>, Int> {
         var numErrors = 0
         val modifiedUsers = mutableListOf<User>()
 
         userPermissionMap.forEach {
             try {
-                val modifiedUser = updatePermissions(it.key, it.value)
+                val modifiedUser = updatePermissions(it.key, it.value, type)
                 modifiedUsers.add(modifiedUser)
             } catch (e : Exception) {
                 modifiedUsers.add(getById(it.key))
