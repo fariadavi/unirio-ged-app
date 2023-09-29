@@ -15,7 +15,7 @@ class FileUtils(private val storageConfig: StorageConfig) {
         val path = Path.of(storageConfig.path, tenant)
         if (Files.notExists(path))
             runCatching { Files.createDirectory(path) }
-                .onFailure { logger.warn { "Handled an attempt to create already existing ${path.toAbsolutePath()} directory" } }
+                .onFailure { logger.warn { "Handled an attempt to create '${path.toAbsolutePath()}' directory. It's possible directory already existed. $it" } }
 
         return Path.of(storageConfig.path, tenant, "${docId}_${fileName}")
     }
