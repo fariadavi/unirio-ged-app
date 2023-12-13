@@ -323,7 +323,7 @@ class DocumentService(
                 summary = googleDoc.description.takeUnless { it.isNullOrBlank() },
                 mediaType = googleDoc.mimeType,
                 category = googleDoc.category,
-                date = LocalDate.parse(googleDoc.date),
+                date = googleDoc.date.takeUnless { it.isNullOrBlank() }?.let { LocalDate.parse(it) },
                 registeredAt = LocalDateTime.now(),
                 registeredBy = userId
             ).let { docRepo.save(it) }

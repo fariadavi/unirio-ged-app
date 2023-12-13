@@ -1,6 +1,7 @@
 package br.unirio.gedapp.service
 
 import br.unirio.gedapp.configuration.yml.StorageConfig
+import br.unirio.gedapp.controller.exceptions.DepartmentAcronymLengthOverflowException
 import br.unirio.gedapp.controller.exceptions.ResourceNotFoundException
 import br.unirio.gedapp.domain.Department
 import br.unirio.gedapp.repository.DepartmentRepository
@@ -45,8 +46,10 @@ class DepartmentService(
         if (!newDataDept.name.isNullOrBlank())
             existingDept = existingDept.copy(name = newDataDept.name)
 
-        if (!newDataDept.acronym.isNullOrBlank() && newDataDept.acronym.length <= 5)
+        if (!newDataDept.acronym.isNullOrBlank()) {
+            if (newDataDept.acronym.length > 5) throw DepartmentAcronymLengthOverflowException()
             existingDept = existingDept.copy(acronym = newDataDept.acronym)
+        }
 
         val updatedDept = deptRepo.save(existingDept)
 
@@ -54,7 +57,7 @@ class DepartmentService(
             try {
                 fileUtils.renameFolder(currentAcronym.lowercase(), updatedDept.acronym.lowercase())
             } catch (e: NoSuchFileException) {
-                logger.error("Folder $currentAcronym not found. Maybe no documents exist for this department?", e)
+                logger.warn("Folder $currentAcronym not found. Maybe no documents exist for this department?", e)
             }
 
             docSvc.updateDocsTenantAcronym(currentAcronym.lowercase(), updatedDept.acronym.lowercase())
@@ -84,7 +87,11 @@ class DepartmentService(
         deptRepo.delete(dept)
 
         //delete tenant directory and all files it contains
-        fileUtils.deleteDirectory(tenant)
+        try {
+            fileUtils.deleteDirectory(tenant)
+        } catch (e: NoSuchFileException) {
+            logger.warn("Folder $tenant not found. Maybe no documents exist for this department?", e)
+        }
     }
 
     fun batchUpdate(editedDepartments: List<Department>): Pair<List<Department>, Int> {

@@ -71,4 +71,12 @@ class ExceptionControllerAdvice {
             exception = ex,
             i18nMsgKey = "exception.userAlreadyInvited"
         ).let { ResponseEntity(it, it.error) }
+
+    @ExceptionHandler
+    fun handleDepartmentAcronymLengthOverflowException(ex: DepartmentAcronymLengthOverflowException) =
+        ErrorResponse(
+            status = HttpStatus.NOT_ACCEPTABLE,
+            exception = ex,
+            i18nMsgKey = "exception.departmentAcronymLengthOverflow"
+        ).let { ResponseEntity(it, it.error) }
 }
