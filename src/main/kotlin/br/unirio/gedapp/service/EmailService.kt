@@ -16,7 +16,7 @@ class EmailService(val javaMailSender: JavaMailSender) {
         val msg = javaMailSender.createMimeMessage()
 
         msg.setRecipients(MimeMessage.RecipientType.TO, recipient)
-        msg.subject = "UNIRIO GED App | Bem-vindo ao ${invitedDepartment.acronym}"
+        msg.subject = "READ UNIRIO | Bem-vindo ao ${invitedDepartment.acronym}"
 
         var htmlTemplate: String = this::class.java.getResource("/email/template.html")!!.readText()
 
