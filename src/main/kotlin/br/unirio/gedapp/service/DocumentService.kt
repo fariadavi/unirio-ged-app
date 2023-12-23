@@ -172,7 +172,7 @@ class DocumentService(
                 context.set(TesseractOCRConfig::class.java, config)
                 context.set(Parser::class.java, parser)
 
-                val handler = WriteOutContentHandler(100_000) // set default write limit as 100k characters
+                val handler = WriteOutContentHandler(-1)
 
                 parser.parse(it, BodyContentHandler(handler), metadata, context)
 
