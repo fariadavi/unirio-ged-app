@@ -9,6 +9,7 @@ import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.RequestOptions
 import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestHighLevelClient
+import org.elasticsearch.index.query.Operator
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.index.reindex.BulkByScrollResponse
 import org.elasticsearch.index.reindex.UpdateByQueryRequest
@@ -58,13 +59,6 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
             QueryBuilders.boolQuery()
                 .filter(QueryBuilders.termQuery("tenant", tenant))
 
-        if (text.isNotBlank())
-            boolQueryBuilder
-                .should(QueryBuilders.matchQuery("content", text))
-                .should(QueryBuilders.matchQuery("title", text))
-                .should(QueryBuilders.matchQuery("summary", text))
-                .minimumShouldMatch(1)
-
         if (category != null)
             boolQueryBuilder.filter(QueryBuilders.termQuery("category_id", category))
 
@@ -85,6 +79,13 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
         if (status != null)
             boolQueryBuilder.filter(QueryBuilders.termQuery("status", status.ordinal))
 
+        if (text.isNotBlank())
+            boolQueryBuilder
+                .must(QueryBuilders
+                    .simpleQueryStringQuery(text)
+                    .fields(mapOf("content" to 1f, "title" to 1.2f, "summary" to .5f))
+                    .defaultOperator(Operator.AND))
+
         val startingIndex = (page - 1) * pageSize
         val searchSourceBuilder =
             SearchSourceBuilder()
@@ -92,13 +93,16 @@ class DocumentRepositoryImpl(@Autowired val mapper: ObjectMapper) : DocumentCust
                 .from(startingIndex)
                 .size(pageSize)
         if (text.isBlank()) searchSourceBuilder.sort("status")
-        if (text.isNotBlank()) searchSourceBuilder.highlighter(HighlightBuilder().field("content").preTags("<strong>").postTags("</strong>"))
+        if (text.isNotBlank())
+            searchSourceBuilder.highlighter(
+                HighlightBuilder().field("title").preTags("<strong>").postTags("</strong>")
+            )
         val searchRequest = SearchRequest().source(searchSourceBuilder)
 
         val searchResponse = performSearch(searchRequest)
 
         val docList = searchResponse.hits
-            .sortedBy { hit -> hit.score }
+            .sortedByDescending { hit -> hit.score }
             .map { hit ->
                 mapper.convertValue(hit.sourceAsMap, Document::class.java).copy(id = hit.id)
                     .also { it.searchMatches = hit.highlightFields.values.flatMap{ h -> h.fragments.map { f -> f.string() } } }
